@@ -1,5 +1,5 @@
-import logging
 import paho.mqtt.client as mqtt
+from hyggepowermeter.services.log.logger import logger
 
 
 class MQTTClient(object):
@@ -23,28 +23,28 @@ class MQTTClient(object):
             self.topics.append(topic.topic)
 
     def _on_connect(self, _, __, flags, rc):
-        logging.debug(
+        logger.debug(
             f"Connected {self.client_id}, result code: {str(rc)} {str(flags)}")
 
     def _on_subscribe(self, _, __, mid, granted_qos):
-        logging.info(
+        logger.info(
             f"Subscribed {self.client_id}, mid: {mid}, granted qos: {granted_qos}")
-        logging.info(
+        logger.info(
             f"Listening for {self.client_id}  messages, topics: {str(self.topics)}")
 
     def _on_disconnect(self, _, __, rc):
-        logging.debug(f"Disconnected {self.client_id}, result code: {str(rc)}")
+        logger.debug(f"Disconnected {self.client_id}, result code: {str(rc)}")
 
     def _on_message(self, _, __, msg):
-        logging.info(
+        logger.info(
             f"Client: {self.client_id} Topic: {msg.topic}, Mid: {msg.mid}, Payload: {msg.payload.decode('utf-8')}")
 
     def _on_publish(self, _, __, mid):
-        logging.info(f"Published by {self.client_id}, mid: {mid}")
+        logger.info(f"Published by {self.client_id}, mid: {mid}")
 
     def listen(self):
         try:
             self.client.loop_forever()
         except KeyboardInterrupt:
-            logging.info(f"Received KeyboardInterrupt, disconnecting {self.config.mqtt.id}")
+            logger.info(f"Received KeyboardInterrupt, disconnecting {self.config.mqtt.id}")
             self.client.disconnect()
