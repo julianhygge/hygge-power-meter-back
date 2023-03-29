@@ -2,9 +2,12 @@ import logging
 import sys
 from pathlib import Path
 
+from playhouse.postgres_ext import PostgresqlExtDatabase
 from hyggepowermeter.data.power_meter_repository import PowerMeterRepository
 from hyggepowermeter.services.configuration.configuration import PowerMeterSubscriberConfiguration
 from hyggepowermeter.services.mqtt.subscriber_client import PowerMeterSubscriberClient
+
+db = PostgresqlExtDatabase("power-meter", autorollback=True, autocreate=True)
 
 
 def run_subscriber():

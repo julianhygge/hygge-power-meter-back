@@ -2,6 +2,7 @@ from datetime import datetime
 from peewee import Model, IntegerField, FloatField, CharField, DateTimeField
 from playhouse.postgres_ext import PostgresqlExtDatabase
 
+
 db = PostgresqlExtDatabase("power-meter")
 
 
@@ -42,12 +43,13 @@ class DailyKwh(PowerMeter):
 
 class PowerMeterRepository:
     def __init__(self, db_config):
-        db.init(database=db_config.name,
-                host=db_config.server,
+        # self.__create_database_if_not_exists(db_config)
+        db.init(database=db_config.database,
+                host=db_config.host,
                 port=db_config.port,
                 user=db_config.user,
                 password=db_config.password)
-
+        self.__create_schema_if_not_exists('measurements')
         self.__create_table_if_not_exists(PowerMeter)
         self.__create_table_if_not_exists(DailyKwh)
         self.__create_table_if_not_exists(HourlyKwh)
@@ -59,3 +61,20 @@ class PowerMeterRepository:
             print(f"Table {table_class.get_table_name()} created.")
         else:
             print(f"Table {table_class.get_table_name()} already exists.")
+
+    @staticmethod
+    def __create_schema_if_not_exists(schema_name):
+        schema_exists_query = f"SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{schema_name}'"
+
+        with db.atomic():
+            cursor = db.cursor()
+            cursor.execute(schema_exists_query)
+            schema_exists = cursor.fetchone()
+
+        if not schema_exists:
+            create_schema_query = f"CREATE SCHEMA {schema_name}"
+            db.execute_sql(create_schema_query)
+            print(f"Schema {schema_name} created.")
+        else:
+            print(f"Schema {schema_name} already exists.")
+
