@@ -22,6 +22,7 @@ class PowerMeterSubscriberConfiguration:
         self.config = ConfigObj(file_path)
         # self.project_db_path = self.config["project_db_path"]
         self.mqtt = self.__get_mqtt_config()
+        self.db = self.__get_postgres_config()
 
     def __get_mqtt_config(self):
         data = self.config['mqtt']
@@ -40,6 +41,18 @@ class PowerMeterSubscriberConfiguration:
             topic.topic = t.split(' ')[0]
             topic.qos = int(t.split(' ')[1])
             temp_obj.topics.append(topic)
+        return temp_obj
+
+    def __get_postgres_config(self):
+        data = self.config['postgres']
+        temp_obj = self.ConfigObject()
+        temp_obj.host = data["host"]
+        temp_obj.port = int(data["port"])
+        temp_obj.database = data["database"]
+        temp_obj.user = data["user"]
+        temp_obj.password = data["password"]
+        temp_obj.options = data["options"]
+
         return temp_obj
 
     class ConfigObject:

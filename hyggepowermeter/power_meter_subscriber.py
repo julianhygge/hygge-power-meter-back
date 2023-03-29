@@ -14,8 +14,8 @@ def run_subscriber():
             config_path = sys.argv[i + 1]
             break
 
-    power_meter_repository = PowerMeterRepository()
     config = PowerMeterSubscriberConfiguration(config_path)
+    power_meter_repository = PowerMeterRepository(config.db)
     mqtt_client = PowerMeterSubscriberClient(config)
 
     if mqtt_client:
