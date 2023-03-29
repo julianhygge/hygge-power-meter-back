@@ -31,6 +31,17 @@ class PowerMeter(PowerMeterBase):
         schema = 'measurements'
 
 
+class ProcessedReadings(BaseModel):
+    id = AutoField(primary_key=True)
+    timestamp = DateTimeField(default=datetime.now)
+    last_processed_reading = IntegerField()
+    processed_table = CharField(max_length=20)
+
+    class Meta:
+        table_name = 'processed_readings'
+        schema = 'control'
+
+
 class HourlyKwh(PowerMeterBase):
     class Meta:
         table_name = 'hourly_kwh'
