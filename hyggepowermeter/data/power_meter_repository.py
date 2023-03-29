@@ -1,0 +1,2 @@
+class PowerMeterRepository:
+    pass

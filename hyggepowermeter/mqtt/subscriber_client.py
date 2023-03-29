@@ -1,7 +1,7 @@
-from hyggepowermeter.mqtt_configuration import PowerMeterSubscriberConfiguration
-from mqtt.mqtt_base_client import MQTTClient
+from hyggepowermeter.mqtt.mqtt_base_client import MQTTClient
+from hyggepowermeter.configuration.mqtt_configuration import PowerMeterSubscriberConfiguration
 import logging
-from topics.topics_factory import TopicFactory
+from hyggepowermeter.mqtt.topics.topics_factory import TopicFactory
 
 
 class PowerMeterSubscriberClient(MQTTClient):
