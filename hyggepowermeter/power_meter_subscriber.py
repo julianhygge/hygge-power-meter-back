@@ -1,8 +1,8 @@
 import logging
 import sys
 from pathlib import Path
-from hyggepowermeter.configuration.mqtt_configuration import PowerMeterSubscriberConfiguration
-from hyggepowermeter.mqtt.subscriber_client import PowerMeterSubscriberClient
+from hyggepowermeter.services.configuration.configuration import PowerMeterSubscriberConfiguration
+from hyggepowermeter.services.mqtt.subscriber_client import PowerMeterSubscriberClient
 
 
 def run_subscriber():

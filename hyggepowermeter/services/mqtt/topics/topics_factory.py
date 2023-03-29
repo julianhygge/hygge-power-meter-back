@@ -1,4 +1,4 @@
-from hyggepowermeter.mqtt.topics.topics.main_register import MainRegisters
+from hyggepowermeter.services.mqtt.topics.topics.main_register import MainRegisters
 
 
 class TopicFactory:
