@@ -7,7 +7,7 @@ from hyggepowermeter.data.power_meter_repository import PowerMeterRepository
 from hyggepowermeter.services.configuration.configuration import PowerMeterSubscriberConfiguration
 from hyggepowermeter.services.mqtt.subscriber_client import PowerMeterSubscriberClient
 
-db = PostgresqlExtDatabase("power-meter", autorollback=True, autocreate=True)
+db = PostgresqlExtDatabase("power-meter")
 
 
 def run_subscriber():

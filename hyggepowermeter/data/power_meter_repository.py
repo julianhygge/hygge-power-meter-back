@@ -43,7 +43,6 @@ class DailyKwh(PowerMeter):
 
 class PowerMeterRepository:
     def __init__(self, db_config):
-        # self.__create_database_if_not_exists(db_config)
         db.init(database=db_config.database,
                 host=db_config.host,
                 port=db_config.port,
