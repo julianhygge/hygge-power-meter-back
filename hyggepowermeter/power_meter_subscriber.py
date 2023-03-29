@@ -10,7 +10,7 @@ def run_subscriber():
     mqtt_client = PowerMeterSubscriberClient(CONFIGURATION, power_meter_repository)
     meter_data_processor_service = MeterDataProcessorService(power_meter_repository)
 
-    #meter_data_processor_service.run_hourly_and_daily()
+    # meter_data_processor_service.run_hourly_and_daily()
 
     try:
         mqtt_client.listen()

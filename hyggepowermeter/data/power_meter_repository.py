@@ -53,7 +53,6 @@ class PowerMeterRepository:
         else:
             return None
 
-
     @staticmethod
     def __insert(table_class, data):
         try:
