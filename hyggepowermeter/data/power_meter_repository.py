@@ -1,7 +1,6 @@
 from datetime import datetime
-from peewee import Model, IntegerField, FloatField, CharField, DateTimeField
+from peewee import Model, IntegerField, FloatField, CharField, DateTimeField, AutoField
 from playhouse.postgres_ext import PostgresqlExtDatabase
-
 
 db = PostgresqlExtDatabase("power-meter")
 
@@ -16,7 +15,7 @@ class BaseModel(Model):
 
 
 class PowerMeter(BaseModel):
-    id = IntegerField(primary_key=True)
+    id = AutoField(primary_key=True)
     timestamp = DateTimeField(default=datetime.now)
     device_id = IntegerField()
     box_id = CharField(max_length=50)
@@ -78,3 +77,8 @@ class PowerMeterRepository:
         else:
             print(f"Schema {schema_name} already exists.")
 
+    @staticmethod
+    def insert_into_power_meter_table(voltage, current, timestamp, device_id, box_id):
+        power = (current*voltage)/1000
+        PowerMeter.create(timestamp=timestamp, device_id=device_id, box_id=box_id, current=current, voltage=voltage,
+                          power=power)

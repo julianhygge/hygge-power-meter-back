@@ -19,11 +19,12 @@ def run_subscriber():
 
     config = PowerMeterSubscriberConfiguration(config_path)
     power_meter_repository = PowerMeterRepository(config.db)
-    mqtt_client = PowerMeterSubscriberClient(config)
+    mqtt_client = PowerMeterSubscriberClient(config, power_meter_repository)
 
     if mqtt_client:
         try:
             mqtt_client.listen()
+            # power_meter_repository.insert_into_power_meter_table()
             logging.info("Exiting")
         except BaseException as err:
             logging.exception(f"Unexpected exception, {type(err)} when connecting to mqtt server")
