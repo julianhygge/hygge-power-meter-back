@@ -24,6 +24,9 @@ class PowerMeterRepository:
     def insert_daily_kwh(self, data):
         self.__insert(DailyKwh, data)
 
+    def read_power_meter_readings(self, filters=None, order_by=None, limit=None, between=None):
+        self.__read(PowerMeter, filters, order_by, limit, between)
+
     @staticmethod
     def __insert(table_class, data):
         try:
@@ -36,11 +39,15 @@ class PowerMeterRepository:
             return None
 
     @staticmethod
-    def __read(table_class, filters=None, order_by=None, limit=None):
+    def __read(table_class, filters=None, order_by=None, limit=None, between=None):
         try:
             query = table_class.select()
             if filters:
                 query = query.where(*filters)
+
+            if between:
+                start_time, end_time = between
+                query = query.where((table_class.timestamp >= start_time) & (table_class.timestamp < end_time))
 
             if order_by:
                 query = query.order_by(*order_by)

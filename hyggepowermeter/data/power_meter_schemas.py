@@ -1,5 +1,5 @@
 from datetime import datetime
-from peewee import Model, IntegerField, FloatField, CharField, DateTimeField
+from peewee import Model, IntegerField, FloatField, CharField, DateTimeField, AutoField
 from playhouse.postgres_ext import PostgresqlExtDatabase
 
 db = PostgresqlExtDatabase("power-meter")
@@ -15,7 +15,7 @@ class BaseModel(Model):
 
 
 class PowerMeter(BaseModel):
-    id = IntegerField(primary_key=True)
+    id = AutoField(primary_key=True)
     timestamp = DateTimeField(default=datetime.now)
     device_id = IntegerField()
     box_id = CharField(max_length=50)
