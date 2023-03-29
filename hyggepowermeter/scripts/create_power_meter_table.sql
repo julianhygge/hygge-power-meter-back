@@ -1,0 +1,10 @@
+CREATE TABLE measurements.power_meter
+(
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  device_id INT  NOT NULL,
+  box_id VARCHAR(50) NOT NULL,
+  current FLOAT NOT NULL,
+  voltage FLOAT NOT NULL,
+  power FLOAT NOT NULL
+);

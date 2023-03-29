@@ -1,0 +1,34 @@
+#!/bin/sh
+
+USERNAME=hyggepowermeter
+GROUP_NAME=hyggepowermeter
+SERVICE_NAME=hyggepowermeter.service
+
+case "$1" in
+    remove|purge)
+        # Stop and disable the service
+        systemctl stop $SERVICE_NAME
+        systemctl disable $SERVICE_NAME
+
+        # Remove the service file
+        rm /etc/systemd/system/$SERVICE_NAME
+
+        # Reload systemd configuration
+        systemctl daemon-reload
+        systemctl reset-failed
+
+        # Remove the user and group
+        deluser --system $USERNAME
+        delgroup --system $GROUP_NAME
+
+        # Remove the directories
+        rm -rf /var/lib/hyggepowermeter
+        rm -rf /var/log/hyggepowermeter
+        ;;
+    *)
+        echo "Unsupported operation: $1" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

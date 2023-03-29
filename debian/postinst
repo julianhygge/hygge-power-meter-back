@@ -1,0 +1,60 @@
+#!/bin/sh
+set -e
+
+# Create a new user and group
+USERNAME=hyggepowermeter
+GROUP_NAME=hyggepowermeter
+PASSWORD=default
+addgroup --system $GROUP_NAME
+adduser --system --ingroup $GROUP_NAME $USERNAME
+
+# Set the password for the user
+echo "$USERNAME:$PASSWORD" | chpasswd
+
+# Add the user to the dialout group
+adduser $USERNAME dialout
+
+
+# Create the program directory
+mkdir -p /var/lib/hyggepowermeter
+
+# Set ownership and permissions
+chown $USERNAME:$GROUP_NAME /var/lib/hyggepowermeter
+chmod 750 /var/lib/hyggepowermeter
+
+# Create the log directory
+mkdir -p /var/log/hyggepowermeter
+
+# Set ownership and permissions
+chown $USERNAME:$GROUP_NAME /var/log/hyggepowermeter
+chmod 750 /var/log/hyggepowermeter
+
+# Create the systemd service file
+cat >/etc/systemd/system/hyggepowermeter.service <<EOF
+[Unit]
+Description=Hygge Power Meter Service
+After=network.target
+
+[Service]
+Type=simple
+User=$USERNAME
+Group=$GROUP_NAME
+WorkingDirectory=/var/lib/hyggepowermeter
+ExecStart=/usr/bin/hyggepowermeter
+StandardOutput=append:/var/log/hyggepowermeter/hyggepowermeter.log
+StandardError=append:/var/log/hyggepowermeter/hyggepowermeter.log
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd configuration and enable the service
+systemctl daemon-reload
+systemctl enable hyggepowermeter.service
+
+# Start the service
+systemctl start hyggepowermeter.service
+
+exit 0
