@@ -1,44 +1,6 @@
-from datetime import datetime
-from peewee import Model, IntegerField, FloatField, CharField, DateTimeField
-from playhouse.postgres_ext import PostgresqlExtDatabase
+from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh
+from hyggepowermeter.services.configuration.configuration import CONFIGURATION
 from hyggepowermeter.services.log.logger import logger
-
-db = PostgresqlExtDatabase("power-meter")
-
-
-class BaseModel(Model):
-    class Meta:
-        database = db
-
-    @classmethod
-    def get_table_name(cls):
-        return cls._meta.table_name
-
-
-class PowerMeter(BaseModel):
-    id = IntegerField(primary_key=True)
-    timestamp = DateTimeField(default=datetime.now)
-    device_id = IntegerField()
-    box_id = CharField(max_length=50)
-    current = FloatField()
-    voltage = FloatField()
-    power = FloatField()
-
-    class Meta:
-        table_name = 'power_meter'
-        schema = 'measurements'
-
-
-class HourlyKwh(PowerMeter):
-    class Meta:
-        table_name = 'hourly_kwh'
-        schema = 'measurements'
-
-
-class DailyKwh(PowerMeter):
-    class Meta:
-        table_name = 'daily_kwh'
-        schema = 'measurements'
 
 
 class PowerMeterRepository:
@@ -52,6 +14,46 @@ class PowerMeterRepository:
         self.__create_table_if_not_exists(PowerMeter)
         self.__create_table_if_not_exists(DailyKwh)
         self.__create_table_if_not_exists(HourlyKwh)
+
+    def insert_power_meter_reading(self, data):
+        self.__insert(PowerMeter, data)
+
+    def insert_hourly_kwh(self, data):
+        self.__insert(HourlyKwh, data)
+
+    def insert_daily_kwh(self, data):
+        self.__insert(DailyKwh, data)
+
+    @staticmethod
+    def __insert(table_class, data):
+        try:
+            with db.atomic():
+                record = table_class.create(**data)
+                logger.info(f"Inserted record with ID {record.id} into {table_class.get_table_name()}.")
+                return record
+        except Exception as e:
+            logger.error(f"Error inserting record into {table_class.get_table_name()}: {e}")
+            return None
+
+    @staticmethod
+    def __read(table_class, filters=None, order_by=None, limit=None):
+        try:
+            query = table_class.select()
+            if filters:
+                query = query.where(*filters)
+
+            if order_by:
+                query = query.order_by(*order_by)
+
+            if limit:
+                query = query.limit(limit)
+
+            records = list(query)
+            logger.info(f"Read {len(records)} records from {table_class.get_table_name()}.")
+            return records
+        except Exception as e:
+            logger.error(f"Error reading records from {table_class.get_table_name()}: {e}")
+            return []
 
     @staticmethod
     def __create_table_if_not_exists(table_class):
@@ -76,3 +78,6 @@ class PowerMeterRepository:
             logger.info(f"Schema {schema_name} created.")
         else:
             logger.info(f"Schema {schema_name} already exists.")
+
+
+power_meter_repository = PowerMeterRepository(CONFIGURATION.db)

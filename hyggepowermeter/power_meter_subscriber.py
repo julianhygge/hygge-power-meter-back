@@ -4,7 +4,7 @@ from hyggepowermeter.services.mqtt.subscriber_client import PowerMeterSubscriber
 
 
 def run_subscriber():
-    mqtt_client = PowerMeterSubscriberClient(CONFIGURATION.mqtt)
+    mqtt_client = PowerMeterSubscriberClient(CONFIGURATION)
 
     if mqtt_client:
         try:

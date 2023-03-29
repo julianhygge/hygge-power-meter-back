@@ -12,7 +12,6 @@ class PowerMeterSubscriberClient(MQTTClient):
         except BaseException as err:
             logger.exception(str(err))
 
-    # def __init__(self, config: BookingSubscriberConfiguration, ev_db: EvChargerDb):
     def __init__(self, config: PowerMeterSubscriberConfiguration):
         super().__init__(config.mqtt)
         self.client.on_message = self.on_message
