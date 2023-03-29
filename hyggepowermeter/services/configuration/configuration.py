@@ -1,20 +1,6 @@
-import logging
-import sys
-from enum import Enum
+from pathlib import Path
+import os
 from configobj import ConfigObj
-
-logger = logging.getLogger('HYGGE BOOKING SUBSCRIBER')
-
-
-class ErrorLevel(Enum):
-    CRITICAL = 50
-    FATAL = CRITICAL
-    ERROR = 40
-    WARNING = 30
-    WARN = WARNING
-    INFO = 20
-    DEBUG = 10
-    NOTSET = 0
 
 
 class PowerMeterSubscriberConfiguration:
@@ -57,3 +43,7 @@ class PowerMeterSubscriberConfiguration:
 
     class ConfigObject:
         pass
+
+
+APP_ENV = os.environ.get("APP_ENV") or "local"
+CONFIGURATION = PowerMeterSubscriberConfiguration(str(Path.cwd()) + "/services/configuration/{}.ini".format(APP_ENV))

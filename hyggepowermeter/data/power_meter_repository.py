@@ -1,7 +1,7 @@
 from datetime import datetime
 from peewee import Model, IntegerField, FloatField, CharField, DateTimeField
 from playhouse.postgres_ext import PostgresqlExtDatabase
-
+from hyggepowermeter.services.log.logger import logger
 
 db = PostgresqlExtDatabase("power-meter")
 
@@ -57,9 +57,9 @@ class PowerMeterRepository:
     def __create_table_if_not_exists(table_class):
         if not table_class.table_exists():
             table_class.create_table()
-            print(f"Table {table_class.get_table_name()} created.")
+            logger.info(f"Table {table_class.get_table_name()} created.")
         else:
-            print(f"Table {table_class.get_table_name()} already exists.")
+            logger.info(f"Table {table_class.get_table_name()} already exists.")
 
     @staticmethod
     def __create_schema_if_not_exists(schema_name):
@@ -73,7 +73,6 @@ class PowerMeterRepository:
         if not schema_exists:
             create_schema_query = f"CREATE SCHEMA {schema_name}"
             db.execute_sql(create_schema_query)
-            print(f"Schema {schema_name} created.")
+            logger.info(f"Schema {schema_name} created.")
         else:
-            print(f"Schema {schema_name} already exists.")
-
+            logger.info(f"Schema {schema_name} already exists.")
