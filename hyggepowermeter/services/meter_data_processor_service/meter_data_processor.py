@@ -8,6 +8,8 @@ from collections import defaultdict
 class MeterDataProcessorService:
     def __init__(self, db_client):
         self.__db_client = db_client
+        self.__run_next_hour = False
+        self.__run_next_day = False
 
     def __store_hourly_kwh(self):
         # Calculate the start and end times for the past hour
@@ -42,7 +44,7 @@ class MeterDataProcessorService:
                 kwh = self.calculate_kwh(readings_group)
                 timestamp = end_time.replace(hour=hour, minute=0, second=0, microsecond=0)
                 data = {
-                    "timestamp": timestamp,
+                    "timestamp": timestamp + timedelta(hours=1),
                     "device_id": device_id,
                     "box_id": box_id,
                     "power": kwh
@@ -62,18 +64,24 @@ class MeterDataProcessorService:
                 "device_id": device.device_id
             }
 
-            self.__db_client.insert_processed_reading(data)
+            if self.__run_next_hour:
+                self.__db_client.insert_processed_reading(data)
+                self.__run_next_hour = False
 
     def run_hourly_and_daily(self):
         while True:
             now = datetime.utcnow()
+            time.sleep(60)
             next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
             sleep_time = (next_hour - now).total_seconds()
-            time.sleep(sleep_time)
+            if sleep_time < 60:
+                time.sleep(sleep_time)
+                self.__run_next_hour = True
             self.__store_hourly_kwh()
             # Check if it's time to store the daily kWh
             if now.hour == 23:  # 23:
-                self.__store_daily_kwh()
+                self.__run_next_day = True
+            self.__store_daily_kwh()
 
     def __store_daily_kwh(self):
         # Calculate the start and end times for the past hour
@@ -127,8 +135,9 @@ class MeterDataProcessorService:
                 "box_id": device.box_id,
                 "device_id": device.device_id
             }
-
-            self.__db_client.insert_processed_reading(data)
+            if self.__run_next_day:
+                self.__db_client.insert_processed_reading(data)
+                self.__run_next_day = False
 
     @staticmethod
     def calculate_total_kwh(hourly_kwh_list) -> float:
@@ -174,8 +183,7 @@ class MeterDataProcessorService:
         return sorted_grouped_readings
 
     @staticmethod
-    def calculate_kwh(readings_by_hour, expected_readings=60):
-        total_energy = 0
+    def calculate_kwh(readings_by_hour):
         n_readings = len(readings_by_hour)
 
         if n_readings == 0:
@@ -188,23 +196,6 @@ class MeterDataProcessorService:
             total_power += power
         avg_power = total_power / n_readings
 
-        # Calculate energy consumption for available intervals
-        for i in range(n_readings - 1):
-            current_reading = readings_by_hour[i]
-            next_reading = readings_by_hour[i + 1]
+        total_energy_in_kwh = avg_power/1000
 
-            power = current_reading.voltage * current_reading.current
-            time_diff = (next_reading.timestamp - current_reading.timestamp).total_seconds() / 3600
-
-            energy = power * time_diff / 1000
-            total_energy += energy
-
-        # Estimate energy consumption for missing intervals
-        if n_readings < expected_readings:
-            missing_intervals = expected_readings - n_readings
-            avg_interval_duration = 1 / expected_readings  # Assuming 1 hour / expected_readings
-
-            estimated_energy = avg_power * missing_intervals * avg_interval_duration / 1000
-            total_energy += estimated_energy
-
-        return total_energy
+        return total_energy_in_kwh

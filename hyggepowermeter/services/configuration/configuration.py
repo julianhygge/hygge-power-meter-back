@@ -6,9 +6,9 @@ from configobj import ConfigObj
 class PowerMeterSubscriberConfiguration:
     def __init__(self, file_path):
         self.config = ConfigObj(file_path)
-        # self.project_db_path = self.config["project_db_path"]
         self.mqtt = self.__get_mqtt_config()
         self.db = self.__get_postgres_config()
+        self.logging = self.__get_logging_config()
 
     def __get_mqtt_config(self):
         data = self.config['mqtt']
@@ -39,6 +39,13 @@ class PowerMeterSubscriberConfiguration:
         temp_obj.password = data["password"]
         temp_obj.options = data["options"]
 
+        return temp_obj
+
+    def __get_logging_config(self):
+        data = self.config['logging']
+        temp_obj = self.ConfigObject()
+        temp_obj.level = data["level"]
+        temp_obj.log_directory = data["log_directory"]
         return temp_obj
 
     class ConfigObject:
