@@ -36,9 +36,23 @@ class ProcessedReadings(BaseModel):
     timestamp = DateTimeField(default=datetime.now)
     last_processed_reading = IntegerField()
     processed_table = CharField(max_length=20)
+    box_id = CharField(max_length=20)
+    device_id = IntegerField()
 
     class Meta:
         table_name = 'processed_readings'
+        schema = 'control'
+
+
+class PowerMeterDevices(BaseModel):
+    id = AutoField(primary_key=True)
+    timestamp = DateTimeField(default=datetime.now)
+    box_id = CharField(max_length=20)
+    device_id = IntegerField()
+    description = CharField(max_length=50)
+
+    class Meta:
+        table_name = 'powermeter_devices'
         schema = 'control'
 
 
@@ -46,9 +60,15 @@ class HourlyKwh(PowerMeterBase):
     class Meta:
         table_name = 'hourly_kwh'
         schema = 'measurements'
+        indexes = (
+            (('timestamp', 'device_id', 'box_id'), True),
+        )
 
 
 class DailyKwh(PowerMeterBase):
     class Meta:
         table_name = 'daily_kwh'
         schema = 'measurements'
+        indexes = (
+            (('timestamp', 'device_id', 'box_id'), True),
+        )

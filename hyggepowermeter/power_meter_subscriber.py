@@ -1,3 +1,4 @@
+import threading
 from hyggepowermeter.data.power_meter_repository import PowerMeterRepository
 from hyggepowermeter.services.configuration.configuration import CONFIGURATION
 from hyggepowermeter.services.log.logger import logger
@@ -10,10 +11,16 @@ def run_subscriber():
     mqtt_client = PowerMeterSubscriberClient(CONFIGURATION, power_meter_repository)
     meter_data_processor_service = MeterDataProcessorService(power_meter_repository)
 
-    #meter_data_processor_service.run_hourly_and_daily()
-
     try:
-        mqtt_client.listen()
+        mqtt_thread = threading.Thread(target=mqtt_client.listen)
+        mqtt_thread.start()
+
+        meter_data_processor_thread = threading.Thread(target=meter_data_processor_service.run_hourly_and_daily)
+        meter_data_processor_thread.start()
+
+        mqtt_thread.join()
+        meter_data_processor_thread.join()
+
         logger.info("Exiting")
     except BaseException as err:
         logger.exception(f"Unexpected exception, {type(err)} when connecting to mqtt server")

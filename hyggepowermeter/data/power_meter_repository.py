@@ -1,5 +1,6 @@
 from peewee import Expression
-from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings
+from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings, \
+    PowerMeterDevices
 from hyggepowermeter.services.log.logger import logger
 
 
@@ -16,9 +17,29 @@ class PowerMeterRepository:
         self.__create_table_if_not_exists(DailyKwh)
         self.__create_table_if_not_exists(HourlyKwh)
         self.__create_table_if_not_exists(ProcessedReadings)
+        self.__create_table_if_not_exists(ProcessedReadings)
+        self.__create_table_if_not_exists(PowerMeterDevices)
 
     def insert_power_meter_reading(self, data):
         self.__insert(PowerMeter, data)
+
+    def upsert_hourly_kwh(self, data):
+        self.__upsert(HourlyKwh, data)
+
+    def upsert_daily_kwh(self, data):
+        self.__upsert(DailyKwh, data)
+
+    @staticmethod
+    def __upsert(model_class, data):
+        query = (
+            model_class
+            .insert(data)
+            .on_conflict(
+                conflict_target=[model_class.timestamp, model_class.device_id, model_class.box_id],
+                update={model_class.power: data['power']}
+            )
+        )
+        query.execute()
 
     def insert_hourly_kwh(self, data):
         self.__insert(HourlyKwh, data)
@@ -29,10 +50,28 @@ class PowerMeterRepository:
     def read_power_meter_readings(self, filters=None, order_by=None, limit=None, between=None):
         self.__read(PowerMeter, filters, order_by, limit, between)
 
-    def read_last_power_meter_readings(self, after_id):
+    def read_last_power_meter_readings(self, after_id, box_id, device_id):
         meter_reading_filter = Expression(PowerMeter.id, ">", after_id)
-        filters = [meter_reading_filter]
+        box_filter = Expression(PowerMeter.box_id, "=", box_id)
+        device_filter = Expression(PowerMeter.device_id, "=", device_id)
+        filters = [meter_reading_filter, box_filter, device_filter]
         meter_readings = self.__read(PowerMeter, filters=filters)
+        return meter_readings
+
+    def read_last_kwh_readings(self, after_id, box_id, device_id):
+        meter_reading_filter = Expression(HourlyKwh.id, ">", after_id)
+        box_filter = Expression(HourlyKwh.box_id, "=", box_id)
+        device_filter = Expression(HourlyKwh.device_id, "=", device_id)
+        filters = [meter_reading_filter, box_filter, device_filter]
+        meter_readings = self.__read(HourlyKwh, filters=filters)
+        return meter_readings
+
+    def read_last_hourly_kwh(self, after_id, box_id, device_id):
+        meter_reading_filter = Expression(HourlyKwh.id, ">", after_id)
+        box_filter = Expression(HourlyKwh.box_id, "=", box_id)
+        device_filter = Expression(HourlyKwh.device_id, "=", device_id)
+        filters = [meter_reading_filter, box_filter, device_filter]
+        meter_readings = self.__read(HourlyKwh, filters=filters)
         return meter_readings
 
     @staticmethod
@@ -41,9 +80,12 @@ class PowerMeterRepository:
         PowerMeter.create(timestamp=timestamp, device_id=device_id, box_id=box_id, current=current, voltage=voltage,
                           power=power)
 
-    def get_last_processed_meter_reading(self):
-        processed_table_filter = Expression(ProcessedReadings.processed_table, "=", "meter_readings")
-        filters = [processed_table_filter]
+    def get_last_processed_meter_reading(self, box_id, device_id, table_type):
+        processed_table_filter = Expression(ProcessedReadings.processed_table, "=", table_type)
+        box_id_filter = Expression(ProcessedReadings.box_id, "=", box_id)
+        device_id_filter = Expression(ProcessedReadings.device_id, "=", device_id)
+
+        filters = [processed_table_filter, box_id_filter, device_id_filter]
         read_iter = self.__read(ProcessedReadings, filters=filters)
 
         if isinstance(read_iter, list):
@@ -52,6 +94,10 @@ class PowerMeterRepository:
             return next(iter(read_iter), None)
         else:
             return None
+
+    def get_all_meter_devices(self):
+        power_meter_devices = self.__read(PowerMeterDevices)
+        return power_meter_devices
 
     @staticmethod
     def __insert(table_class, data):
@@ -114,5 +160,21 @@ class PowerMeterRepository:
             logger.info(f"Schema {schema_name} created.")
         else:
             logger.info(f"Schema {schema_name} already exists.")
+
+    @staticmethod
+    def insert_processed_reading(data):
+        # Try to get the record matching device_id, box_id, and processed_table
+        record, created = ProcessedReadings.get_or_create(
+            device_id=data["device_id"],
+            box_id=data["box_id"],
+            processed_table=data["processed_table"],
+            defaults=data,
+        )
+
+        # If the record already exists, update it with the new values
+        if not created:
+            record.timestamp = data["timestamp"]
+            record.last_processed_reading = data["last_processed_reading"]
+            record.save()
 
 # power_meter_repository = PowerMeterRepository(CONFIGURATION.db)
