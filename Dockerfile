@@ -5,7 +5,7 @@ ARG ENVIRONMENT
 ENV APP_ENV=${ENVIRONMENT:-dev}
 
 # setup working directory
-WORKDIR /powermeter
+WORKDIR /opt/application/
 
 # install application executable package/code
 COPY . .
@@ -20,4 +20,4 @@ RUN apk update \
     && rm -rf /var/cache/apk/* \
     && mkdir /var/log/application/
 
-CMD ["python", "hyggepowermeter/power_meter_subscriber.py"]
+CMD ['python', 'hyggepowermeter/.power_meter_subscriber.py']
