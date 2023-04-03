@@ -145,21 +145,7 @@ class PowerMeterRepository:
         else:
             logger.info(f"Table {table_class.get_table_name()} already exists.")
 
-    @staticmethod
-    def __create_schema_if_not_exists(schema_name):
-        schema_exists_query = f"SELECT schema_name FROM information_schema.schemata WHERE schema_name = '{schema_name}'"
 
-        with db.atomic():
-            cursor = db.cursor()
-            cursor.execute(schema_exists_query)
-            schema_exists = cursor.fetchone()
-
-        if not schema_exists:
-            create_schema_query = f"CREATE SCHEMA {schema_name}"
-            db.execute_sql(create_schema_query)
-            logger.info(f"Schema {schema_name} created.")
-        else:
-            logger.info(f"Schema {schema_name} already exists.")
 
     @staticmethod
     def insert_processed_reading(data):
