@@ -4,6 +4,7 @@ FROM python:${PYTHON_VERSION}-alpine3.15
 ARG ENVIRONMENT
 ENV APP_ENV=${ENVIRONMENT:-dev}
 
+
 # setup working directory
 WORKDIR /powermeter
 
@@ -15,9 +16,11 @@ RUN apk update \
     && apk add libpq \
     && apk add --no-cache --virtual .build-deps gcc python3-dev musl-dev postgresql-dev \
     && apk add nano \
+    && pip install psycopg2 \
     && pip install --no-cache-dir -r requirements.txt \
     && apk del .build-deps \
     && rm -rf /var/cache/apk/* \
     && mkdir /var/log/application/
 
+ENV PYTHONPATH /powermeter
 CMD ["python", "hyggepowermeter/power_meter_subscriber.py"]

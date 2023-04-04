@@ -11,8 +11,8 @@ class PowerMeterRepository:
                 port=db_config.port,
                 user=db_config.user,
                 password=db_config.password)
-        self.__create_schema_if_not_exists('measurements')
-        self.__create_schema_if_not_exists('control')
+        # self.__create_schema_if_not_exists('measurements')
+        # self.__create_schema_if_not_exists('control')
         self.__create_table_if_not_exists(PowerMeter)
         self.__create_table_if_not_exists(DailyKwh)
         self.__create_table_if_not_exists(HourlyKwh)

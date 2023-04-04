@@ -53,4 +53,8 @@ class PowerMeterSubscriberConfiguration:
 
 
 APP_ENV = os.environ.get("APP_ENV") or "local"
-CONFIGURATION = PowerMeterSubscriberConfiguration(str(Path.cwd()) + "/services/configuration/{}.ini".format(APP_ENV))
+
+if APP_ENV == 'local':
+    CONFIGURATION = PowerMeterSubscriberConfiguration(str(Path.cwd()) + "/services/configuration/{}.ini".format(APP_ENV))
+else:
+    CONFIGURATION = PowerMeterSubscriberConfiguration(str(Path.cwd()) + "/hyggepowermeter/services/configuration/{}.ini".format(APP_ENV))
