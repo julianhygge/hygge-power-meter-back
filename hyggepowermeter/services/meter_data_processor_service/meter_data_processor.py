@@ -8,15 +8,8 @@ from collections import defaultdict
 class MeterDataProcessorService:
     def __init__(self, db_client):
         self.__db_client = db_client
-        self.__run_next_hour = False
-        self.__run_next_day = False
 
     def __store_hourly_kwh(self):
-        # Calculate the start and end times for the past hour
-        now = datetime.now()
-        local_tz = tz.tzlocal()
-        now_utc = now.replace(tzinfo=local_tz).astimezone(pytz.utc)
-        end_time = now_utc.replace(minute=0, second=0, microsecond=0)
         power_meter_devices = self.__db_client.get_all_meter_devices()
         processed_table = "meter_readings"
 
@@ -36,13 +29,17 @@ class MeterDataProcessorService:
             if not any(readings):
                 return
 
+            readings = self.convert_timestamps(readings, device.timezone)
+
             grouped_readings = self.group_readings_by_hour(readings)
             hour = 0
             last_hour = None
             for (hour, box_id, device_id), readings_group in grouped_readings.items():
-                # Calculate the hourly kWh
                 kwh = self.calculate_kwh(readings_group)
-                timestamp = end_time.replace(hour=hour, minute=0, second=0, microsecond=0)
+                last_time = readings_group[-1].timestamp
+                timestamp = last_time.replace(hour=hour, minute=0, second=0, microsecond=0)
+                timestamp = timestamp.astimezone(pytz.utc)
+
                 data = {
                     "timestamp": timestamp,
                     "device_id": device_id,
@@ -64,35 +61,24 @@ class MeterDataProcessorService:
                 "device_id": device.device_id
             }
 
-            if self.__run_next_hour:
+            ist_tz = pytz.timezone(device.timezone)  # we need to change logic when we have more time zones
+            now_aware_of_time_zone = datetime.utcnow().astimezone(ist_tz)
+            next_hour = now_aware_of_time_zone.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+            sleep_time = (next_hour - now_aware_of_time_zone).total_seconds()
+            if sleep_time < 60:
                 self.__db_client.insert_processed_reading(data)
-                self.__run_next_hour = False
 
     def run_hourly_and_daily(self):
         while True:
-            now = datetime.utcnow()
-            time.sleep(60)
-            next_hour = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-            sleep_time = (next_hour - now).total_seconds()
-            if sleep_time < 60:
-                time.sleep(sleep_time)
-                self.__run_next_hour = True
             self.__store_hourly_kwh()
-            # Check if it's time to store the daily kWh
-            if now.hour == 23:  # 23:
-                self.__run_next_day = True
             self.__store_daily_kwh()
+            time.sleep(60)
 
     def __store_daily_kwh(self):
-        # Calculate the start and end times for the past hour
-        now = datetime.now()
-        local_tz = tz.tzlocal()
-        now_utc = now.replace(tzinfo=local_tz).astimezone(pytz.utc)
-        end_time = now_utc.replace(minute=0, second=0, microsecond=0)
         power_meter_devices = self.__db_client.get_all_meter_devices()
-
+        processed_table = "hourly_kwh"
         for device in power_meter_devices:
-            processed_table = "hourly_kwh"
+
             # Get the readings since last time
             reading = self.__db_client.get_last_processed_meter_reading(box_id=device.box_id,
                                                                         device_id=device.device_id,
@@ -109,12 +95,17 @@ class MeterDataProcessorService:
             if not any(readings):
                 return
 
+            readings = self.convert_timestamps(readings, device.timezone)
+
             grouped_readings = self.group_readings_by_day(readings)
 
             last_day = None
             for (day, box_id, device_id), readings_group in grouped_readings.items():
                 kwh = self.calculate_total_kwh(readings_group)
-                timestamp = end_time.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
+                last_time = readings_group[-1].timestamp
+                timestamp = last_time.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
+                time_zone = pytz.timezone(device.timezone)
+                timestamp = timestamp.astimezone(pytz.utc)
                 data = {
                     "timestamp": timestamp,
                     "device_id": device_id,
@@ -135,9 +126,11 @@ class MeterDataProcessorService:
                 "box_id": device.box_id,
                 "device_id": device.device_id
             }
-            if self.__run_next_day:
+
+            ist_tz = pytz.timezone(device.timezone)
+            now_aware_of_time_zone = datetime.utcnow().astimezone(ist_tz)
+            if now_aware_of_time_zone.hour == 23:  # 23:
                 self.__db_client.insert_processed_reading(data)
-                self.__run_next_day = False
 
     @staticmethod
     def calculate_total_kwh(hourly_kwh_list) -> float:
@@ -196,6 +189,13 @@ class MeterDataProcessorService:
             total_power += power
         avg_power = total_power / n_readings
 
-        total_energy_in_kwh = avg_power/1000
+        total_energy_in_kwh = avg_power / 1000
 
         return total_energy_in_kwh
+
+    @staticmethod
+    def convert_timestamps(readings, target_timezone):
+        time_zone = pytz.timezone(target_timezone)
+        for r in readings:
+            r.timestamp = r.timestamp.replace(tzinfo=pytz.utc).astimezone(time_zone)
+        return readings

@@ -1,8 +1,18 @@
 from datetime import datetime
-from peewee import Model, IntegerField, FloatField, CharField, DateTimeField, AutoField
+from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase
 from playhouse.postgres_ext import PostgresqlExtDatabase
 
-db = PostgresqlExtDatabase("power-meter")
+
+class PostgresqlUTCDatabase(PostgresqlDatabase):
+    def _connect(self, *args, **kwargs):
+        conn = super(PostgresqlUTCDatabase, self)._connect(*args, **kwargs)
+        cursor = conn.cursor()
+        cursor.execute("SET TIME ZONE 'UTC';")
+        cursor.close()
+        return conn
+
+
+db = PostgresqlUTCDatabase("power-meter")
 
 
 class BaseModel(Model):
@@ -50,6 +60,7 @@ class PowerMeterDevices(BaseModel):
     box_id = CharField(max_length=20)
     device_id = IntegerField()
     description = CharField(max_length=50)
+    timezone = CharField(max_length=65, default='Asia/Kolkata')
 
     class Meta:
         table_name = 'powermeter_devices'
