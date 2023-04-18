@@ -4,6 +4,6 @@ from hyggepowermeter.services.mqtt.topics.topics.main_register import MainRegist
 class TopicFactory:
     @staticmethod
     def get_topic_subscriber(topic):
-        if "main_registers" in topic:
+        if "main" in topic:
             t = MainRegisters()
             return t

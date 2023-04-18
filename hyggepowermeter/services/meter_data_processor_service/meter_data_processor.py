@@ -44,7 +44,7 @@ class MeterDataProcessorService:
                 kwh = self.calculate_kwh(readings_group)
                 timestamp = end_time.replace(hour=hour, minute=0, second=0, microsecond=0)
                 data = {
-                    "timestamp": timestamp + timedelta(hours=1),
+                    "timestamp": timestamp,
                     "device_id": device_id,
                     "box_id": box_id,
                     "power": kwh
@@ -57,7 +57,7 @@ class MeterDataProcessorService:
 
             data = {
                 "timestamp":
-                    last_item.timestamp.replace(hour=hour, minute=0, second=0, microsecond=0) + timedelta(hours=1),
+                    last_item.timestamp.replace(hour=hour, minute=0, second=0, microsecond=0),
                 "last_processed_reading": last_item.id,
                 "processed_table": processed_table,
                 "box_id": device.box_id,
@@ -129,7 +129,7 @@ class MeterDataProcessorService:
 
             data = {
                 "timestamp":
-                    last_item.timestamp.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1),
+                    last_item.timestamp.replace(hour=0, minute=0, second=0, microsecond=0),
                 "last_processed_reading": last_item.id,
                 "processed_table": processed_table,
                 "box_id": device.box_id,
