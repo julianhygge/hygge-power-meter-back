@@ -16,5 +16,4 @@ class FullRegisters(TopicBase):
             "timestamp": power_meter_reading.utc_timestamp,
             **meter_registers_dict,
         }
-        # db_client.insert_full_registers(data)
-
+        db_client.insert_full_registers(data)
