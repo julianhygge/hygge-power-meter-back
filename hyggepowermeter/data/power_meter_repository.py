@@ -1,6 +1,6 @@
 from peewee import Expression
 from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings, \
-    PowerMeterDevices
+    PowerMeterDevices, MeterFullRegisters
 from hyggepowermeter.data.repository_base import RepositoryBase
 
 
@@ -20,6 +20,7 @@ class PowerMeterRepository(RepositoryBase):
         self._create_table_if_not_exists(ProcessedReadings)
         self._create_table_if_not_exists(ProcessedReadings)
         self._create_table_if_not_exists(PowerMeterDevices)
+        self._create_table_if_not_exists(MeterFullRegisters)
 
     def insert_power_meter_reading(self, data):
         self._insert(PowerMeter, data)
@@ -48,6 +49,9 @@ class PowerMeterRepository(RepositoryBase):
     def insert_daily_kwh(self, data):
         self._insert(DailyKwh, data)
 
+    def insert_full_registers(self, data):
+        self._insert(MeterFullRegisters, data)
+
     def read_power_meter_readings(self, filters=None, order_by=None, limit=None, between=None):
         self._read(PowerMeter, filters, order_by, limit, between)
 
@@ -75,11 +79,8 @@ class PowerMeterRepository(RepositoryBase):
         meter_readings = self._read(HourlyKwh, filters=filters)
         return meter_readings
 
-    @staticmethod
-    def insert_into_power_meter_table(voltage, current, timestamp, device_id, box_id):
-        power = (current * voltage) / 1000
-        PowerMeter.create(timestamp=timestamp, device_id=device_id, box_id=box_id, current=current, voltage=voltage,
-                          power=power)
+    def insert_into_power_meter_table(self, data):
+        self._insert(PowerMeter, data)
 
     def get_last_processed_meter_reading(self, box_id, device_id, table_type):
         processed_table_filter = Expression(ProcessedReadings.processed_table, "=", table_type)
@@ -112,5 +113,3 @@ class PowerMeterRepository(RepositoryBase):
             record.timestamp = data["timestamp"]
             record.last_processed_reading = data["last_processed_reading"]
             record.save()
-
-

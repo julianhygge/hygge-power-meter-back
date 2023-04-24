@@ -1,6 +1,5 @@
 from datetime import datetime
 from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase
-from playhouse.postgres_ext import PostgresqlExtDatabase
 
 
 class PostgresqlUTCDatabase(PostgresqlDatabase):
@@ -79,6 +78,88 @@ class HourlyKwh(PowerMeterBase):
 class DailyKwh(PowerMeterBase):
     class Meta:
         table_name = 'daily_kwh'
+        schema = 'measurements'
+        indexes = (
+            (('timestamp', 'device_id', 'box_id'), True),
+        )
+
+
+class MeterFullRegisters(BaseModel):
+    id = AutoField(primary_key=True)
+    box_id = CharField()
+    device_id = IntegerField()
+    timestamp = DateTimeField()
+
+    consumption_active_ch1 = FloatField(null=True)
+    consumption_active_ch2 = FloatField(null=True)
+    consumption_active_ch3 = FloatField(null=True)
+    consumption_active_ch4 = FloatField(null=True)
+
+    consumption_apparent_ch1 = FloatField(null=True)
+    consumption_apparent_ch2 = FloatField(null=True)
+    consumption_apparent_ch3 = FloatField(null=True)
+    consumption_apparent_ch4 = FloatField(null=True)
+
+    consumption_reactive_ch1 = FloatField(null=True)
+    consumption_reactive_ch2 = FloatField(null=True)
+    consumption_reactive_ch3 = FloatField(null=True)
+    consumption_reactive_ch4 = FloatField(null=True)
+
+    frequency = FloatField(null=True)
+
+    phase_angle_l1_ch1 = FloatField(null=True)
+    phase_angle_l1_ch2 = FloatField(null=True)
+    phase_angle_l1_ch3 = FloatField(null=True)
+    phase_angle_l1_ch4 = FloatField(null=True)
+
+    phase_angle_l2_ch1 = FloatField(null=True)
+    phase_angle_l2_ch2 = FloatField(null=True)
+    phase_angle_l2_ch3 = FloatField(null=True)
+    phase_angle_l2_ch4 = FloatField(null=True)
+
+    phase_angle_l3_ch1 = FloatField(null=True)
+    phase_angle_l3_ch2 = FloatField(null=True)
+    phase_angle_l3_ch3 = FloatField(null=True)
+    phase_angle_l3_ch4 = FloatField(null=True)
+
+    rms_l1_current_ch1 = FloatField(null=True)
+    rms_l1_current_ch2 = FloatField(null=True)
+    rms_l1_current_ch3 = FloatField(null=True)
+    rms_l1_current_ch4 = FloatField(null=True)
+
+    rms_l1_voltage = FloatField(null=True)
+
+    rms_l2_current_ch1 = FloatField(null=True)
+    rms_l2_current_ch2 = FloatField(null=True)
+    rms_l2_current_ch3 = FloatField(null=True)
+    rms_l2_current_ch4 = FloatField(null=True)
+
+    rms_l2_voltage = FloatField(null=True)
+
+    rms_l3_current_ch1 = FloatField(null=True)
+    rms_l3_current_ch2 = FloatField(null=True)
+    rms_l3_current_ch3 = FloatField(null=True)
+    rms_l3_current_ch4 = FloatField(null=True)
+
+    rms_l3_voltage = FloatField(null=True)
+
+    total_active_power_ch1 = FloatField(null=True)
+    total_active_power_ch2 = FloatField(null=True)
+    total_active_power_ch3 = FloatField(null=True)
+    total_active_power_ch4 = FloatField(null=True)
+
+    total_apparent_power_ch1 = FloatField(null=True)
+    total_apparent_power_ch2 = FloatField(null=True)
+    total_apparent_power_ch3 = FloatField(null=True)
+    total_apparent_power_ch4 = FloatField(null=True)
+
+    total_reactive_power_ch1 = FloatField(null=True)
+    total_reactive_power_ch2 = FloatField(null=True)
+    total_reactive_power_ch3 = FloatField(null=True)
+    total_reactive_power_ch4 = FloatField(null=True)
+
+    class Meta:
+        table_name = 'meter_full_registers'
         schema = 'measurements'
         indexes = (
             (('timestamp', 'device_id', 'box_id'), True),
