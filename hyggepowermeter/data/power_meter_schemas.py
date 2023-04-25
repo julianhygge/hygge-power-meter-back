@@ -40,6 +40,24 @@ class PowerMeter(PowerMeterBase):
         schema = 'measurements'
 
 
+class SchoolMeters(PowerMeterBase):
+    current = FloatField()
+    voltage = FloatField()
+
+    class Meta:
+        table_name = 'school_meters'
+        schema = 'measurements'
+
+
+class LabMeters(PowerMeterBase):
+    current = FloatField()
+    voltage = FloatField()
+
+    class Meta:
+        table_name = 'lab_meters'
+        schema = 'measurements'
+
+
 class ProcessedReadings(BaseModel):
     id = AutoField(primary_key=True)
     timestamp = DateTimeField(default=datetime.now)
