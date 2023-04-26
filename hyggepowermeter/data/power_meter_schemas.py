@@ -104,7 +104,7 @@ class HourlyKwh(PowerMeterBase):
         table_name = 'hourly_kwh'
         schema = 'measurements'
         indexes = (
-            (('timestamp', 'device_id', 'box_id'), True),
+            (('timestamp', 'device_id', 'box_id', "load_id"), True),
         )
 
 
@@ -115,7 +115,7 @@ class DailyKwh(PowerMeterBase):
         table_name = 'daily_kwh'
         schema = 'measurements'
         indexes = (
-            (('timestamp', 'device_id', 'box_id'), True),
+            (('timestamp', 'device_id', 'box_id', "load_id"), True),
         )
 
 

@@ -25,12 +25,15 @@ class MeterDataProcessorService:
                 if reading is not None:
                     last_reading_id = reading.last_processed_reading
 
-                readings = self.__db_client.read_last_power_meter_readings(after_id=last_reading_id,
+                # for now, I am querying a specific table, but it should be same table by load id
+                readings = self.__db_client.read_last_power_meter_readings(table_name=load.measurements_table,
+                                                                           after_id=last_reading_id,
                                                                            box_id=device.box_id,
-                                                                           device_id=device.device_id)
+                                                                           device_id=device.device_id,
+                                                                           )
 
                 if not any(readings):
-                    return
+                    continue
 
                 readings = self.convert_timestamps(readings, device.timezone)
 
@@ -47,7 +50,8 @@ class MeterDataProcessorService:
                         "timestamp": timestamp,
                         "device_id": device_id,
                         "box_id": box_id,
-                        "power": kwh
+                        "power": kwh,
+                        "load_id": load.id
                     }
 
                     self.__db_client.upsert_hourly_kwh(data)
@@ -82,58 +86,60 @@ class MeterDataProcessorService:
         processed_table = "hourly_kwh"
         for device in power_meter_devices:
 
-            # Get the readings since last time
-            reading = self.__db_client.get_last_processed_meter_reading(box_id=device.box_id,
-                                                                        device_id=device.device_id,
-                                                                        table_type=processed_table
-                                                                        )
-            last_reading_id = 0
-            if reading is not None:
-                last_reading_id = reading.last_processed_reading
+            loads = self.__db_client.get_all_loads_by_box_id(box_id=device.box_id)
+            for load in loads:
+                # Get the readings since last time
+                reading = self.__db_client.get_last_processed_meter_reading(box_id=device.box_id,
+                                                                            device_id=device.device_id,
+                                                                            table_type=load.measurements_table)
+                last_reading_id = 0
+                if reading is not None:
+                    last_reading_id = reading.last_processed_reading
 
-            readings = self.__db_client.read_last_kwh_readings(after_id=last_reading_id,
-                                                               box_id=device.box_id,
-                                                               device_id=device.device_id)
+                readings = self.__db_client.read_last_kwh_readings(load_id=load.id,
+                                                                   after_id=last_reading_id,
+                                                                   box_id=device.box_id,
+                                                                   device_id=device.device_id)
 
-            if not any(readings):
-                return
+                if not any(readings):
+                    continue
 
-            readings = self.convert_timestamps(readings, device.timezone)
+                readings = self.convert_timestamps(readings, device.timezone)
 
-            grouped_readings = self.group_readings_by_day(readings)
+                grouped_readings = self.group_readings_by_day(readings)
 
-            last_day = None
-            for (day, box_id, device_id), readings_group in grouped_readings.items():
-                kwh = self.calculate_total_kwh(readings_group)
-                last_time = readings_group[-1].timestamp
-                timestamp = last_time.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
-                time_zone = pytz.timezone(device.timezone)
-                timestamp = timestamp.astimezone(pytz.utc)
+                last_day = None
+                for (day, box_id, device_id), readings_group in grouped_readings.items():
+                    kwh = self.calculate_total_kwh(readings_group)
+                    last_time = readings_group[-1].timestamp
+                    timestamp = last_time.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
+                    timestamp = timestamp.astimezone(pytz.utc)
+                    data = {
+                        "timestamp": timestamp,
+                        "device_id": device_id,
+                        "box_id": box_id,
+                        "power": kwh,
+                        "load_id": load.id
+                    }
+
+                    self.__db_client.upsert_daily_kwh(data)
+                    last_day = day
+
+                last_item = grouped_readings[last_day, device.box_id, device.device_id][-1]
+
                 data = {
-                    "timestamp": timestamp,
-                    "device_id": device_id,
-                    "box_id": box_id,
-                    "power": kwh
+                    "timestamp":
+                        last_item.timestamp.replace(hour=0, minute=0, second=0, microsecond=0),
+                    "last_processed_reading": last_item.id,
+                    "processed_table": load.measurements_table,
+                    "box_id": device.box_id,
+                    "device_id": device.device_id
                 }
 
-                self.__db_client.upsert_daily_kwh(data)
-                last_day = day
-
-            last_item = grouped_readings[last_day, device.box_id, device.device_id][-1]
-
-            data = {
-                "timestamp":
-                    last_item.timestamp.replace(hour=0, minute=0, second=0, microsecond=0),
-                "last_processed_reading": last_item.id,
-                "processed_table": processed_table,
-                "box_id": device.box_id,
-                "device_id": device.device_id
-            }
-
-            ist_tz = pytz.timezone(device.timezone)
-            now_aware_of_time_zone = datetime.utcnow().astimezone(ist_tz)
-            if now_aware_of_time_zone.hour == 23:  # 23:
-                self.__db_client.insert_processed_reading(data)
+                device_timezone = pytz.timezone(device.timezone)
+                now_aware_of_time_zone = datetime.utcnow().astimezone(device_timezone)
+                if now_aware_of_time_zone.hour == 23:  # 23:
+                    self.__db_client.insert_processed_reading(data)
 
     @staticmethod
     def calculate_total_kwh(hourly_kwh_list) -> float:

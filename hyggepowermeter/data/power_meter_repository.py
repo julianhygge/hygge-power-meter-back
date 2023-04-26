@@ -1,7 +1,8 @@
 from peewee import Expression
 from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings, \
-    PowerMeterDevices, MeterFullRegisters, PowerMeterLoads, SchoolMeters, LabMeters
+    PowerMeterDevices, MeterFullRegisters, PowerMeterLoads, SchoolMeters, LabMeters, BaseModel
 from hyggepowermeter.data.repository_base import RepositoryBase
+from hyggepowermeter.services.log.logger import logger
 
 
 class PowerMeterRepository(RepositoryBase):
@@ -25,7 +26,6 @@ class PowerMeterRepository(RepositoryBase):
         self._create_table_if_not_exists(SchoolMeters)
         self._create_table_if_not_exists(LabMeters)
 
-
     def insert_power_meter_reading(self, data):
         self._insert(PowerMeter, data)
 
@@ -47,7 +47,7 @@ class PowerMeterRepository(RepositoryBase):
             model_class
             .insert(data)
             .on_conflict(
-                conflict_target=[model_class.timestamp, model_class.device_id, model_class.box_id],
+                conflict_target=[model_class.timestamp, model_class.device_id, model_class.box_id, model_class.load_id],
                 update={model_class.power: data['power']}
             )
         )
@@ -65,19 +65,35 @@ class PowerMeterRepository(RepositoryBase):
     def read_power_meter_readings(self, filters=None, order_by=None, limit=None, between=None):
         self._read(PowerMeter, filters, order_by, limit, between)
 
-    def read_last_power_meter_readings(self, after_id, box_id, device_id):
-        meter_reading_filter = Expression(PowerMeter.id, ">", after_id)
-        box_filter = Expression(PowerMeter.box_id, "=", box_id)
-        device_filter = Expression(PowerMeter.device_id, "=", device_id)
+    def find_table_class(self, cls, table_name):
+        for subclass in cls.__subclasses__():
+            if subclass.get_table_name() == table_name:
+                return subclass
+            found = self.find_table_class(subclass, table_name)
+            if found is not None:
+                return found
+        return None
+
+    def read_last_power_meter_readings(self, table_name, after_id, box_id, device_id):
+        table_class = self.find_table_class(BaseModel, table_name)
+
+        if table_class is None:
+            logger.error(f"Table name not found: {table_name}")
+            return []
+
+        meter_reading_filter = Expression(table_class.id, ">", after_id)
+        box_filter = Expression(table_class.box_id, "=", box_id)
+        device_filter = Expression(table_class.device_id, "=", device_id)
         filters = [meter_reading_filter, box_filter, device_filter]
-        meter_readings = self._read(PowerMeter, filters=filters)
+        meter_readings = self._read(table_class, filters=filters)
         return meter_readings
 
-    def read_last_kwh_readings(self, after_id, box_id, device_id):
+    def read_last_kwh_readings(self, load_id, after_id, box_id, device_id):
+        load_filter = Expression(HourlyKwh.load_id, "=", load_id)
         meter_reading_filter = Expression(HourlyKwh.id, ">", after_id)
         box_filter = Expression(HourlyKwh.box_id, "=", box_id)
         device_filter = Expression(HourlyKwh.device_id, "=", device_id)
-        filters = [meter_reading_filter, box_filter, device_filter]
+        filters = [meter_reading_filter, box_filter, device_filter, load_filter]
         meter_readings = self._read(HourlyKwh, filters=filters)
         return meter_readings
 
