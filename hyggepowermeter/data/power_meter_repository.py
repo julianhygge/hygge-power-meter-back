@@ -1,6 +1,6 @@
 from peewee import Expression
 from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings, \
-    PowerMeterDevices, MeterFullRegisters, PowerMeterLoads
+    PowerMeterDevices, MeterFullRegisters, PowerMeterLoads, SchoolMeters, LabMeters
 from hyggepowermeter.data.repository_base import RepositoryBase
 
 
@@ -22,10 +22,18 @@ class PowerMeterRepository(RepositoryBase):
         self._create_table_if_not_exists(ProcessedReadings)
         self._create_table_if_not_exists(PowerMeterDevices)
         self._create_table_if_not_exists(MeterFullRegisters)
+        self._create_table_if_not_exists(SchoolMeters)
+        self._create_table_if_not_exists(LabMeters)
 
 
     def insert_power_meter_reading(self, data):
         self._insert(PowerMeter, data)
+
+    def insert_school_meter_reading(self, data):
+        self._insert(SchoolMeters, data)
+
+    def insert_lab_meter_reading(self, data):
+        self._insert(LabMeters, data)
 
     def upsert_hourly_kwh(self, data):
         self._upsert(HourlyKwh, data)
