@@ -1,6 +1,6 @@
 from peewee import Expression
 from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings, \
-    PowerMeterDevices, MeterFullRegisters
+    PowerMeterDevices, MeterFullRegisters, PowerMeterLoads
 from hyggepowermeter.data.repository_base import RepositoryBase
 
 
@@ -15,12 +15,14 @@ class PowerMeterRepository(RepositoryBase):
         self._create_schema_if_not_exists('measurements')
         self._create_schema_if_not_exists('control')
         self._create_table_if_not_exists(PowerMeter)
+        self._create_table_if_not_exists(PowerMeterLoads)
         self._create_table_if_not_exists(DailyKwh)
         self._create_table_if_not_exists(HourlyKwh)
         self._create_table_if_not_exists(ProcessedReadings)
         self._create_table_if_not_exists(ProcessedReadings)
         self._create_table_if_not_exists(PowerMeterDevices)
         self._create_table_if_not_exists(MeterFullRegisters)
+
 
     def insert_power_meter_reading(self, data):
         self._insert(PowerMeter, data)
@@ -100,6 +102,12 @@ class PowerMeterRepository(RepositoryBase):
     def get_all_meter_devices(self):
         power_meter_devices = self._read(PowerMeterDevices)
         return power_meter_devices
+
+    def get_all_loads_by_box_id(self, box_id):
+        box_id_filter = Expression(PowerMeterLoads.box_id, "=", box_id)
+        filters = [box_id_filter]
+        loads = self._read(PowerMeterLoads, filters=filters)
+        return loads
 
     @staticmethod
     def insert_processed_reading(data):

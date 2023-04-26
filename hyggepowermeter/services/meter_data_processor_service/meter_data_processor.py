@@ -15,58 +15,61 @@ class MeterDataProcessorService:
 
         for device in power_meter_devices:
             # Get the readings since last time
-            reading = self.__db_client.get_last_processed_meter_reading(box_id=device.box_id,
-                                                                        device_id=device.device_id,
-                                                                        table_type=processed_table)
-            last_reading_id = 0
-            if reading is not None:
-                last_reading_id = reading.last_processed_reading
 
-            readings = self.__db_client.read_last_power_meter_readings(after_id=last_reading_id,
-                                                                       box_id=device.box_id,
-                                                                       device_id=device.device_id)
+            loads = self.__db_client.get_all_loads_by_box_id(box_id=device.box_id)
+            for load in loads:
+                reading = self.__db_client.get_last_processed_meter_reading(box_id=device.box_id,
+                                                                            device_id=device.device_id,
+                                                                            table_type=load.measurements_table)
+                last_reading_id = 0
+                if reading is not None:
+                    last_reading_id = reading.last_processed_reading
 
-            if not any(readings):
-                return
+                readings = self.__db_client.read_last_power_meter_readings(after_id=last_reading_id,
+                                                                           box_id=device.box_id,
+                                                                           device_id=device.device_id)
 
-            readings = self.convert_timestamps(readings, device.timezone)
+                if not any(readings):
+                    return
 
-            grouped_readings = self.group_readings_by_hour(readings)
-            hour = 0
-            last_hour = None
-            for (hour, box_id, device_id), readings_group in grouped_readings.items():
-                kwh = self.calculate_kwh(readings_group)
-                last_time = readings_group[-1].timestamp
-                timestamp = last_time.replace(hour=hour, minute=0, second=0, microsecond=0)
-                timestamp = timestamp.astimezone(pytz.utc)
+                readings = self.convert_timestamps(readings, device.timezone)
+
+                grouped_readings = self.group_readings_by_hour(readings)
+                hour = 0
+                last_hour = None
+                for (hour, box_id, device_id), readings_group in grouped_readings.items():
+                    kwh = self.calculate_kwh(readings_group)
+                    last_time = readings_group[-1].timestamp
+                    timestamp = last_time.replace(hour=hour, minute=0, second=0, microsecond=0)
+                    timestamp = timestamp.astimezone(pytz.utc)
+
+                    data = {
+                        "timestamp": timestamp,
+                        "device_id": device_id,
+                        "box_id": box_id,
+                        "power": kwh
+                    }
+
+                    self.__db_client.upsert_hourly_kwh(data)
+                    last_hour = hour
+
+                last_item = grouped_readings[last_hour, device.box_id, device.device_id][-1]
 
                 data = {
-                    "timestamp": timestamp,
-                    "device_id": device_id,
-                    "box_id": box_id,
-                    "power": kwh
+                    "timestamp":
+                        last_item.timestamp.replace(hour=hour, minute=0, second=0, microsecond=0),
+                    "last_processed_reading": last_item.id,
+                    "processed_table": processed_table,
+                    "box_id": device.box_id,
+                    "device_id": device.device_id
                 }
 
-                self.__db_client.upsert_hourly_kwh(data)
-                last_hour = hour
-
-            last_item = grouped_readings[last_hour, device.box_id, device.device_id][-1]
-
-            data = {
-                "timestamp":
-                    last_item.timestamp.replace(hour=hour, minute=0, second=0, microsecond=0),
-                "last_processed_reading": last_item.id,
-                "processed_table": processed_table,
-                "box_id": device.box_id,
-                "device_id": device.device_id
-            }
-
-            ist_tz = pytz.timezone(device.timezone)  # we need to change logic when we have more time zones
-            now_aware_of_time_zone = datetime.utcnow().astimezone(ist_tz)
-            next_hour = now_aware_of_time_zone.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-            sleep_time = (next_hour - now_aware_of_time_zone).total_seconds()
-            if sleep_time < 60:
-                self.__db_client.insert_processed_reading(data)
+                ist_tz = pytz.timezone(device.timezone)  # we need to change logic when we have more time zones
+                now_aware_of_time_zone = datetime.utcnow().astimezone(ist_tz)
+                next_hour = now_aware_of_time_zone.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+                sleep_time = (next_hour - now_aware_of_time_zone).total_seconds()
+                if sleep_time < 60:
+                    self.__db_client.insert_processed_reading(data)
 
     def run_hourly_and_daily(self):
         while True:

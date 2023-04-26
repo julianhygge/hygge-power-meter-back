@@ -1,5 +1,6 @@
 from datetime import datetime
-from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase
+from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase, \
+    ForeignKeyField
 
 
 class PostgresqlUTCDatabase(PostgresqlDatabase):
@@ -66,7 +67,21 @@ class PowerMeterDevices(BaseModel):
         schema = 'control'
 
 
+class PowerMeterLoads(BaseModel):
+    id = AutoField(primary_key=True)
+    created_on = DateTimeField(default=datetime.now)
+    description = CharField(max_length=50)
+    box_id = CharField(max_length=20)
+    measurements_table = CharField(max_length=20)
+
+    class Meta:
+        table_name = 'power_meter_loads'
+        schema = 'control'
+
+
 class HourlyKwh(PowerMeterBase):
+    load_id = ForeignKeyField(PowerMeterLoads, field='id', backref='hourly_kwh')
+
     class Meta:
         table_name = 'hourly_kwh'
         schema = 'measurements'
@@ -76,6 +91,8 @@ class HourlyKwh(PowerMeterBase):
 
 
 class DailyKwh(PowerMeterBase):
+    load_id = ForeignKeyField(PowerMeterLoads, field='id', backref='daily_kwh')
+
     class Meta:
         table_name = 'daily_kwh'
         schema = 'measurements'
