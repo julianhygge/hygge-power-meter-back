@@ -1,10 +1,7 @@
 from peewee import Expression
 from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings, \
-<<<<<<< Updated upstream
-    PowerMeterDevices, MeterFullRegisters, PowerMeterLoads, SchoolMeters, LabMeters, BaseModel
-=======
-    PowerMeterDevices, MeterFullRegisters, SchoolMeters, LabMeters, Inverter, BSP, VarioTrack
->>>>>>> Stashed changes
+     PowerMeterLoads, BaseModel, PowerMeterDevices, MeterFullRegisters, SchoolMeters, LabMeters, Inverter,\
+     BSP, VarioTrack
 from hyggepowermeter.data.repository_base import RepositoryBase
 from hyggepowermeter.services.log.logger import logger
 
