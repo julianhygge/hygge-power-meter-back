@@ -1,4 +1,5 @@
 from hyggepowermeter.services.mqtt.topics.topics.full_registers import FullRegisters
+from hyggepowermeter.services.mqtt.topics.topics.inverter_register import InverterRegisters
 from hyggepowermeter.services.mqtt.topics.topics.main_register import MainRegisters
 
 
@@ -11,4 +12,8 @@ class TopicFactory:
 
         elif "full" in topic:
             t = FullRegisters()
+            return t
+
+        elif "inverter" in topic:
+            t = InverterRegisters()
             return t

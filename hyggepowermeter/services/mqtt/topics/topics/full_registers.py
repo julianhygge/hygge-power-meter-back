@@ -8,6 +8,7 @@ from hyggepowermeter.services.mqtt.topics.topic_base import TopicBase
 class FullRegisters(TopicBase):
     def do_action(self, msg, db_client):
         power_meter_reading = json.loads(msg.payload, object_hook=lambda d: SimpleNamespace(**d))
+        # print(power_meter_reading)
         logger.info("Message received")
         meter_registers_dict = vars(power_meter_reading.meter_registers)
         lab_data = {
@@ -26,6 +27,7 @@ class FullRegisters(TopicBase):
             "voltage": meter_registers_dict['rms_l2_voltage']
         }
         school_data["power"] = (school_data["current"] * school_data["voltage"]) / 1000
+
         data = {
             "box_id": power_meter_reading.box_id,
             "device_id": power_meter_reading.device_id,

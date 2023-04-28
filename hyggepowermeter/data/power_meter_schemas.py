@@ -32,6 +32,81 @@ class PowerMeterBase(BaseModel):
     power = FloatField()
 
 
+class Inverter(BaseModel):
+    id = AutoField(primary_key=True)
+    timestamp = DateTimeField(default=datetime.now)
+    device_id = IntegerField()
+    xt_bat_charge_a = FloatField(null=True)
+    xt_phase = IntegerField(null=True)
+    xt_transfert = IntegerField(null=True)
+    xt_mode = IntegerField(null=True)
+    xt_aux1 = IntegerField(null=True)
+    xt_aux2 = IntegerField(null=True)
+    xt_bat_dis_pre_day_kwh = FloatField(null=True)
+    xt_from_grid_pre_day_kwh = FloatField(null=True)
+    xt_from_grid_kwh = FloatField(null=True)
+    xt_energy_day_kwh = FloatField(null=True)
+    xt_rme = FloatField(null=True)
+    xt_ubat_min_vdc = FloatField(null=True)
+    xt_ubat_avg_vdc = FloatField(null=True)
+    xt_ibat_avg_adc = FloatField(null=True)
+    xt_pout_max_kva = FloatField(null=True)
+    xt_pout_avg_kva = FloatField(null=True)
+    xt_pout_a_avg_kw = FloatField(null=True)
+    xt_dev1_temp_max = FloatField(null=True)
+    xt_fout_hz = FloatField(null=True)
+    xt_uin_vac = FloatField(null=True)
+    xt_iin_aac = FloatField(null=True)
+    xt_pin_a_avg_kw = FloatField(null=True)
+    xt_fin_hz = FloatField(null=True)
+    xt_dev_dbg1 = FloatField(null=True)
+
+    class Meta:
+        table_name = 'inverter'
+        schema = 'measurements'
+
+
+class BSP(BaseModel):
+    id = AutoField(primary_key=True)
+    timestamp = DateTimeField(default=datetime.now)
+    device_id = IntegerField()
+    bsp_charged_day_ah = FloatField(null=True)
+    bsp_discharged_day_ah = FloatField(null=True)
+    bsp_ubat_avg_vdc = FloatField(null=True)
+    bsp_ibat_avg_adc = FloatField(null=True)
+    bsp_soc = FloatField(null=True)
+    bsp_tbat = FloatField(null=True)
+
+    class Meta:
+        table_name = 'bsp'
+        schema = 'measurements'
+
+
+class VarioTrack(BaseModel):
+    id = AutoField(primary_key=True)
+    timestamp = DateTimeField(default=datetime.now)
+    device_id = IntegerField()
+    vt_battery_a = FloatField(null=True)
+    vt_prod_day_ah = FloatField(null=True)
+    vt_prod_day_kwh = FloatField(null=True)
+    vt_prod_pre_day_kwh = FloatField(null=True)
+    vt_mode = IntegerField(null=True)
+    vt_phas = IntegerField(null=True)
+    vt_ubam_avg_vdc = FloatField(null=True)
+    vt_ibam_avg_adc = FloatField(null=True)
+    vt_upvm_avg_vdc = FloatField(null=True)
+    vt_psom_avg_kw = FloatField(null=True)
+    vt_dev_temp_avg = FloatField(null=True)
+    vt_aux = IntegerField(null=True)
+    vt_aux2 = IntegerField(null=True)
+    vt_dev_locer = FloatField(null=True)
+    vt_rme = IntegerField(null=True)
+
+    class Meta:
+        table_name = 'vario_track'
+        schema = 'measurements'
+
+
 class PowerMeter(PowerMeterBase):
     current = FloatField()
     voltage = FloatField()
