@@ -1,7 +1,6 @@
 import time
 from datetime import datetime, timedelta
 import pytz
-from dateutil import tz
 from collections import defaultdict
 
 
@@ -29,7 +28,7 @@ class MeterDataProcessorService:
                 readings = self.__db_client.read_last_power_meter_readings(table_name=load.measurements_table,
                                                                            after_id=last_reading_id,
                                                                            box_id=device.box_id,
-                                                                           device_id=device.device_id,
+                                                                           device_id=device.device_id
                                                                            )
 
                 if not any(readings):
@@ -65,7 +64,8 @@ class MeterDataProcessorService:
                     "last_processed_reading": last_item.id,
                     "processed_table": processed_table,
                     "box_id": device.box_id,
-                    "device_id": device.device_id
+                    "device_id": device.device_id,
+                    "load_id": load.id
                 }
 
                 ist_tz = pytz.timezone(device.timezone)  # we need to change logic when we have more time zones
@@ -91,7 +91,9 @@ class MeterDataProcessorService:
                 # Get the readings since last time
                 reading = self.__db_client.get_last_processed_meter_reading(box_id=device.box_id,
                                                                             device_id=device.device_id,
-                                                                            table_type=load.measurements_table)
+                                                                            table_type=load.measurements_table,
+                                                                            load_id=load.id
+                                                                            )
                 last_reading_id = 0
                 if reading is not None:
                     last_reading_id = reading.last_processed_reading
@@ -133,7 +135,8 @@ class MeterDataProcessorService:
                     "last_processed_reading": last_item.id,
                     "processed_table": load.measurements_table,
                     "box_id": device.box_id,
-                    "device_id": device.device_id
+                    "device_id": device.device_id,
+                    "load_id": load.id
                 }
 
                 device_timezone = pytz.timezone(device.timezone)

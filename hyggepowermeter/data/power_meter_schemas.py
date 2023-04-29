@@ -66,6 +66,7 @@ class ProcessedReadings(BaseModel):
     processed_table = CharField(max_length=20)
     box_id = CharField(max_length=20)
     device_id = IntegerField()
+    load_id = IntegerField(null=True)
 
     class Meta:
         table_name = 'processed_readings'

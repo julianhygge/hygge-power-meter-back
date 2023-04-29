@@ -5,6 +5,11 @@ from hyggepowermeter.data.repository_base import RepositoryBase
 from hyggepowermeter.services.log.logger import logger
 
 
+# Organize the nodered dashboard
+# study lines
+# and check why the program is running only the last 24 hours.
+
+
 class PowerMeterRepository(RepositoryBase):
     def __init__(self, db_config):
         super().__init__(db_config)
@@ -108,12 +113,16 @@ class PowerMeterRepository(RepositoryBase):
     def insert_into_power_meter_table(self, data):
         self._insert(PowerMeter, data)
 
-    def get_last_processed_meter_reading(self, box_id, device_id, table_type):
+    def get_last_processed_meter_reading(self, box_id, device_id, table_type, load_id=None):
         processed_table_filter = Expression(ProcessedReadings.processed_table, "=", table_type)
         box_id_filter = Expression(ProcessedReadings.box_id, "=", box_id)
         device_id_filter = Expression(ProcessedReadings.device_id, "=", device_id)
-
         filters = [processed_table_filter, box_id_filter, device_id_filter]
+
+        if load_id is not None:
+            load_filter = Expression(ProcessedReadings.load_id, "=", load_id)
+            filters.append(load_filter)
+
         read_iter = self._read(ProcessedReadings, filters=filters)
 
         if isinstance(read_iter, list):
