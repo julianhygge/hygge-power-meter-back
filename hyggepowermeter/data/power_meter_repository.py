@@ -1,6 +1,7 @@
 from peewee import Expression
 from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings, \
-    PowerMeterDevices, MeterFullRegisters, PowerMeterLoads, SchoolMeters, LabMeters, BaseModel
+     PowerMeterLoads, BaseModel, PowerMeterDevices, MeterFullRegisters, SchoolMeters, LabMeters, Inverter,\
+     BSP, VarioTrack
 from hyggepowermeter.data.repository_base import RepositoryBase
 from hyggepowermeter.services.log.logger import logger
 
@@ -30,9 +31,21 @@ class PowerMeterRepository(RepositoryBase):
         self._create_table_if_not_exists(MeterFullRegisters)
         self._create_table_if_not_exists(SchoolMeters)
         self._create_table_if_not_exists(LabMeters)
+        self._create_table_if_not_exists(Inverter)
+        self._create_table_if_not_exists(BSP)
+        self._create_table_if_not_exists(VarioTrack)
 
     def insert_power_meter_reading(self, data):
         self._insert(PowerMeter, data)
+
+    def insert_inverter_reading(self, data):
+        self._insert(Inverter, data)
+
+    def insert_bsp_reading(self, data):
+        self._insert(BSP, data)
+
+    def insert_vario_track_reading(self, data):
+        self._insert(VarioTrack, data)
 
     def insert_school_meter_reading(self, data):
         self._insert(SchoolMeters, data)
