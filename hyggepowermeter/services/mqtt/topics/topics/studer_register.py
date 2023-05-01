@@ -5,7 +5,7 @@ from hyggepowermeter.services.log.logger import logger
 from hyggepowermeter.services.mqtt.topics.topic_base import TopicBase
 
 
-class InverterRegisters(TopicBase):
+class StuderRegisters(TopicBase):
     def do_action(self, msg, db_client):
         power_meter_reading = json.loads(msg.payload, object_hook=lambda d: SimpleNamespace(**d))
         logger.info("Message received")

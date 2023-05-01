@@ -63,7 +63,7 @@ class Inverter(BaseModel):
 
     class Meta:
         table_name = 'inverter'
-        schema = 'measurements'
+        schema = 'studer'
 
 
 class BSP(BaseModel):
@@ -79,7 +79,7 @@ class BSP(BaseModel):
 
     class Meta:
         table_name = 'bsp'
-        schema = 'measurements'
+        schema = 'studer'
 
 
 class VarioTrack(BaseModel):
@@ -104,34 +104,34 @@ class VarioTrack(BaseModel):
 
     class Meta:
         table_name = 'vario_track'
-        schema = 'measurements'
+        schema = 'studer'
 
 
-class PowerMeter(PowerMeterBase):
+class MainRegisters(PowerMeterBase):
     current = FloatField()
     voltage = FloatField()
 
     class Meta:
-        table_name = 'power_meter'
-        schema = 'measurements'
+        table_name = 'main_registers'
+        schema = 'power_meter'
 
 
-class SchoolMeters(PowerMeterBase):
+class School(PowerMeterBase):
     current = FloatField()
     voltage = FloatField()
 
     class Meta:
-        table_name = 'school_meters'
-        schema = 'measurements'
+        table_name = 'school'
+        schema = 'power_meter'
 
 
-class LabMeters(PowerMeterBase):
+class Lab(PowerMeterBase):
     current = FloatField()
     voltage = FloatField()
 
     class Meta:
-        table_name = 'lab_meters'
-        schema = 'measurements'
+        table_name = 'lab'
+        schema = 'power_meter'
 
 
 class ProcessedReadings(BaseModel):
@@ -148,7 +148,7 @@ class ProcessedReadings(BaseModel):
         schema = 'control'
 
 
-class PowerMeterDevices(BaseModel):
+class MeterDevices(BaseModel):
     id = AutoField(primary_key=True)
     timestamp = DateTimeField(default=datetime.now)
     box_id = CharField(max_length=20)
@@ -157,11 +157,11 @@ class PowerMeterDevices(BaseModel):
     timezone = CharField(max_length=65, default='Asia/Kolkata')
 
     class Meta:
-        table_name = 'powermeter_devices'
+        table_name = 'meter_devices'
         schema = 'control'
 
 
-class PowerMeterLoads(BaseModel):
+class MeterLoads(BaseModel):
     id = AutoField(primary_key=True)
     created_on = DateTimeField(default=datetime.now)
     description = CharField(max_length=50)
@@ -169,33 +169,33 @@ class PowerMeterLoads(BaseModel):
     measurements_table = CharField(max_length=20)
 
     class Meta:
-        table_name = 'power_meter_loads'
+        table_name = 'meter_loads'
         schema = 'control'
 
 
 class HourlyKwh(PowerMeterBase):
-    load_id = ForeignKeyField(PowerMeterLoads, field='id', backref='hourly_kwh')
+    load_id = ForeignKeyField(MeterLoads, field='id', backref='hourly_kwh')
 
     class Meta:
         table_name = 'hourly_kwh'
-        schema = 'measurements'
+        schema = 'power_meter'
         indexes = (
             (('timestamp', 'device_id', 'box_id', "load_id"), True),
         )
 
 
 class DailyKwh(PowerMeterBase):
-    load_id = ForeignKeyField(PowerMeterLoads, field='id', backref='daily_kwh')
+    load_id = ForeignKeyField(MeterLoads, field='id', backref='daily_kwh')
 
     class Meta:
         table_name = 'daily_kwh'
-        schema = 'measurements'
+        schema = 'power_meter'
         indexes = (
             (('timestamp', 'device_id', 'box_id', "load_id"), True),
         )
 
 
-class MeterFullRegisters(BaseModel):
+class FullRegisters(BaseModel):
     id = AutoField(primary_key=True)
     box_id = CharField()
     device_id = IntegerField()
@@ -270,8 +270,8 @@ class MeterFullRegisters(BaseModel):
     total_reactive_power_ch4 = FloatField(null=True)
 
     class Meta:
-        table_name = 'meter_full_registers'
-        schema = 'measurements'
+        table_name = 'full_registers'
+        schema = 'power_meter'
         indexes = (
             (('timestamp', 'device_id', 'box_id'), True),
         )

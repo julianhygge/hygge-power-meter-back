@@ -1,6 +1,6 @@
 from peewee import Expression
-from hyggepowermeter.data.power_meter_schemas import db, PowerMeter, HourlyKwh, DailyKwh, ProcessedReadings, \
-     PowerMeterLoads, BaseModel, PowerMeterDevices, MeterFullRegisters, SchoolMeters, LabMeters, Inverter,\
+from hyggepowermeter.data.power_meter_schemas import db, MainRegisters, HourlyKwh, DailyKwh, ProcessedReadings, \
+     MeterLoads, BaseModel, MeterDevices, FullRegisters, School, Lab, Inverter,\
      BSP, VarioTrack
 from hyggepowermeter.data.repository_base import RepositoryBase
 from hyggepowermeter.services.log.logger import logger
@@ -21,22 +21,24 @@ class PowerMeterRepository(RepositoryBase):
                 password=db_config.password)
         self._create_schema_if_not_exists('measurements')
         self._create_schema_if_not_exists('control')
-        self._create_table_if_not_exists(PowerMeter)
-        self._create_table_if_not_exists(PowerMeterLoads)
+        self._create_schema_if_not_exists('studer')
+        self._create_schema_if_not_exists('power_meter')
+        self._create_table_if_not_exists(MainRegisters)
+        self._create_table_if_not_exists(MeterLoads)
         self._create_table_if_not_exists(DailyKwh)
         self._create_table_if_not_exists(HourlyKwh)
         self._create_table_if_not_exists(ProcessedReadings)
         self._create_table_if_not_exists(ProcessedReadings)
-        self._create_table_if_not_exists(PowerMeterDevices)
-        self._create_table_if_not_exists(MeterFullRegisters)
-        self._create_table_if_not_exists(SchoolMeters)
-        self._create_table_if_not_exists(LabMeters)
+        self._create_table_if_not_exists(MeterDevices)
+        self._create_table_if_not_exists(FullRegisters)
+        self._create_table_if_not_exists(School)
+        self._create_table_if_not_exists(Lab)
         self._create_table_if_not_exists(Inverter)
         self._create_table_if_not_exists(BSP)
         self._create_table_if_not_exists(VarioTrack)
 
     def insert_power_meter_reading(self, data):
-        self._insert(PowerMeter, data)
+        self._insert(MainRegisters, data)
 
     def insert_inverter_reading(self, data):
         self._insert(Inverter, data)
@@ -48,10 +50,10 @@ class PowerMeterRepository(RepositoryBase):
         self._insert(VarioTrack, data)
 
     def insert_school_meter_reading(self, data):
-        self._insert(SchoolMeters, data)
+        self._insert(School, data)
 
     def insert_lab_meter_reading(self, data):
-        self._insert(LabMeters, data)
+        self._insert(Lab, data)
 
     def upsert_hourly_kwh(self, data):
         self._upsert(HourlyKwh, data)
@@ -78,10 +80,10 @@ class PowerMeterRepository(RepositoryBase):
         self._insert(DailyKwh, data)
 
     def insert_full_registers(self, data):
-        self._insert(MeterFullRegisters, data)
+        self._insert(FullRegisters, data)
 
     def read_power_meter_readings(self, filters=None, order_by=None, limit=None, between=None):
-        self._read(PowerMeter, filters, order_by, limit, between)
+        self._read(MainRegisters, filters, order_by, limit, between)
 
     def find_table_class(self, cls, table_name):
         for subclass in cls.__subclasses__():
@@ -124,7 +126,7 @@ class PowerMeterRepository(RepositoryBase):
         return meter_readings
 
     def insert_into_power_meter_table(self, data):
-        self._insert(PowerMeter, data)
+        self._insert(MainRegisters, data)
 
     def get_last_processed_meter_reading(self, box_id, device_id, table_type, load_id=None):
         processed_table_filter = Expression(ProcessedReadings.processed_table, "=", table_type)
@@ -146,13 +148,13 @@ class PowerMeterRepository(RepositoryBase):
             return None
 
     def get_all_meter_devices(self):
-        power_meter_devices = self._read(PowerMeterDevices)
+        power_meter_devices = self._read(MeterDevices)
         return power_meter_devices
 
     def get_all_loads_by_box_id(self, box_id):
-        box_id_filter = Expression(PowerMeterLoads.box_id, "=", box_id)
+        box_id_filter = Expression(MeterLoads.box_id, "=", box_id)
         filters = [box_id_filter]
-        loads = self._read(PowerMeterLoads, filters=filters)
+        loads = self._read(MeterLoads, filters=filters)
         return loads
 
     @staticmethod
