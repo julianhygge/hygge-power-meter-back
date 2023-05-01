@@ -10,7 +10,6 @@ class MeterDataProcessorService:
 
     def __store_hourly_kwh(self):
         power_meter_devices = self.__db_client.get_all_meter_devices()
-        processed_table = "meter_readings"
 
         for device in power_meter_devices:
             # Get the readings since last time
@@ -37,9 +36,10 @@ class MeterDataProcessorService:
                 readings = self.convert_timestamps(readings, device.timezone)
 
                 grouped_readings = self.group_readings_by_hour(readings)
-                hour = 0
+                year, month, day, hour = 0, 0, 0, 0
                 last_hour = None
-                for (hour, box_id, device_id), readings_group in grouped_readings.items():
+                for key, readings_group in grouped_readings.items():
+                    (year, month, day, hour, box_id, device_id) = key
                     kwh = self.calculate_kwh(readings_group)
                     last_time = readings_group[-1].timestamp
                     timestamp = last_time.replace(hour=hour, minute=0, second=0, microsecond=0)
@@ -56,13 +56,13 @@ class MeterDataProcessorService:
                     self.__db_client.upsert_hourly_kwh(data)
                     last_hour = hour
 
-                last_item = grouped_readings[last_hour, device.box_id, device.device_id][-1]
+                last_item = grouped_readings[year, month, day, last_hour, device.box_id, device.device_id][-1]
 
                 data = {
                     "timestamp":
                         last_item.timestamp.replace(hour=hour, minute=0, second=0, microsecond=0),
                     "last_processed_reading": last_item.id,
-                    "processed_table": processed_table,
+                    "processed_table": load.measurements_table,
                     "box_id": device.box_id,
                     "device_id": device.device_id,
                     "load_id": load.id
@@ -91,7 +91,7 @@ class MeterDataProcessorService:
                 # Get the readings since last time
                 reading = self.__db_client.get_last_processed_meter_reading(box_id=device.box_id,
                                                                             device_id=device.device_id,
-                                                                            table_type=load.measurements_table,
+                                                                            table_type=processed_table,
                                                                             load_id=load.id
                                                                             )
                 last_reading_id = 0
@@ -111,7 +111,8 @@ class MeterDataProcessorService:
                 grouped_readings = self.group_readings_by_day(readings)
 
                 last_day = None
-                for (day, box_id, device_id), readings_group in grouped_readings.items():
+                year, month = 0, 0
+                for (year, month, day, box_id, device_id), readings_group in grouped_readings.items():
                     kwh = self.calculate_total_kwh(readings_group)
                     last_time = readings_group[-1].timestamp
                     timestamp = last_time.replace(day=day, hour=0, minute=0, second=0, microsecond=0)
@@ -127,13 +128,13 @@ class MeterDataProcessorService:
                     self.__db_client.upsert_daily_kwh(data)
                     last_day = day
 
-                last_item = grouped_readings[last_day, device.box_id, device.device_id][-1]
+                last_item = grouped_readings[year, month, last_day, device.box_id, device.device_id][-1]
 
                 data = {
                     "timestamp":
                         last_item.timestamp.replace(hour=0, minute=0, second=0, microsecond=0),
                     "last_processed_reading": last_item.id,
-                    "processed_table": load.measurements_table,
+                    "processed_table": processed_table,
                     "box_id": device.box_id,
                     "device_id": device.device_id,
                     "load_id": load.id
@@ -158,15 +159,17 @@ class MeterDataProcessorService:
         grouped_readings = defaultdict(list)
 
         for reading in readings:
+            year = reading.timestamp.year
+            month = reading.timestamp.month
             day = reading.timestamp.day
             box_id = reading.box_id
             device_id = reading.device_id
-            group_key = (day, box_id, device_id)
+            group_key = (year, month, day, box_id, device_id)
 
             grouped_readings[group_key].append(reading)
 
-        # Sort the dictionary by hour
-        sorted_grouped_readings = dict(sorted(grouped_readings.items(), key=lambda x: x[0][0]))
+        # Sort the dictionary by year, month, and day
+        sorted_grouped_readings = dict(sorted(grouped_readings.items(), key=lambda x: (x[0][0], x[0][1], x[0][2])))
 
         return sorted_grouped_readings
 
@@ -175,15 +178,19 @@ class MeterDataProcessorService:
         grouped_readings = defaultdict(list)
 
         for reading in readings:
+            year = reading.timestamp.year
+            month = reading.timestamp.month
+            day = reading.timestamp.day
             hour = reading.timestamp.hour
             box_id = reading.box_id
             device_id = reading.device_id
-            group_key = (hour, box_id, device_id)
+            group_key = (year, month, day, hour, box_id, device_id)
 
             grouped_readings[group_key].append(reading)
 
-        # Sort the dictionary by hour
-        sorted_grouped_readings = dict(sorted(grouped_readings.items(), key=lambda x: x[0][0]))
+        # Sort the dictionary by year, month, day, and hour
+        sorted_grouped_readings = dict(
+            sorted(grouped_readings.items(), key=lambda x: (x[0][0], x[0][1], x[0][2], x[0][3])))
 
         return sorted_grouped_readings
 

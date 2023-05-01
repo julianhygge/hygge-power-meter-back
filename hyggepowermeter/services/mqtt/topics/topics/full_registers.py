@@ -24,7 +24,7 @@ class FullRegisters(TopicBase):
             "device_id": power_meter_reading.device_id,
             "timestamp": power_meter_reading.utc_timestamp,
             "current": meter_registers_dict['rms_l1_current_ch2'],
-            "voltage": meter_registers_dict['rms_l2_voltage']
+            "voltage": meter_registers_dict['rms_l1_voltage']
         }
         school_data["power"] = (school_data["current"] * school_data["voltage"]) / 1000
 
