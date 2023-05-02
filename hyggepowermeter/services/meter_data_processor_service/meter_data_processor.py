@@ -203,12 +203,18 @@ class MeterDataProcessorService:
 
         # Calculate average power for available readings
         total_power = 0
+        min_timestamp = datetime.max
+        max_timestamp = datetime.min
         for reading in readings_by_hour:
             power = reading.voltage * reading.current
             total_power += power
-        avg_power = total_power / n_readings
+            min_timestamp = min(min_timestamp, reading.timestamp)
+            max_timestamp = max(max_timestamp, reading.timestamp)
 
-        total_energy_in_kwh = avg_power / 1000
+        avg_power = total_power / n_readings
+        time_diff_hours = (max_timestamp - min_timestamp).total_seconds() / 3600
+
+        total_energy_in_kwh = avg_power * time_diff_hours / 1000
 
         return total_energy_in_kwh
 
