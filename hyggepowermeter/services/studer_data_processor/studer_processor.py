@@ -2,6 +2,8 @@ import schedule
 import time
 from datetime import datetime, timedelta
 
+from hyggepowermeter.utils.logger import logger
+
 
 class StuderDataProcessor:
     def __init__(self, db_client):
@@ -14,6 +16,7 @@ class StuderDataProcessor:
         box_id = "meghalaya"
         self.get_pv_generation_by_box_and_device_id(box_id, inverter_1_id)
         self.get_pv_generation_by_box_and_device_id(box_id, inverter_2_id)
+        logger.info("Daily pv generation inserted in daily database")
 
     def get_pv_generation_by_box_and_device_id(self, box_id, device_id):
         since_date = datetime.min
@@ -51,18 +54,6 @@ class StuderDataProcessor:
                     'box_id': box_id
                 })
         self.__db_client.insert_daily_production(production_entities)
-
-    # I need to filter de dates cause there are repeated values, and values from last year,
-    #
-    # I need to include the total of this table in the
-    # print(api)
-    #
-    # I need the current consumption,
-    # lab  = total consumption - school consumption
-    #
-    # I would need the total consumption instant, and I am only have the consumption for the current day,
-    #     so I will need the consumption in the last minute
-    # print(average)
 
     def process_studer_data(self):
         self.get_daily_pv_generations()
