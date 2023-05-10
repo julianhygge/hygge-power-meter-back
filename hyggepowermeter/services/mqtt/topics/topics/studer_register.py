@@ -1,8 +1,7 @@
 import json
 from types import SimpleNamespace
-
-from hyggepowermeter.services.log.logger import logger
 from hyggepowermeter.services.mqtt.topics.topic_base import TopicBase
+from hyggepowermeter.utils.logger import logger
 
 
 class StuderRegisters(TopicBase):
@@ -42,6 +41,3 @@ class StuderRegisters(TopicBase):
                 db_client.insert_vario_track_reading(vt_data)
             if bool(bsp_data):
                 db_client.insert_bsp_reading(bsp_data)
-
-
-

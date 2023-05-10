@@ -1,6 +1,7 @@
 from datetime import datetime
 from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase, \
-    ForeignKeyField
+    ForeignKeyField, DateField
+from datetime import date
 
 
 class PostgresqlUTCDatabase(PostgresqlDatabase):
@@ -193,6 +194,18 @@ class DailyKwh(PowerMeterBase):
         indexes = (
             (('timestamp', 'device_id', 'box_id', "load_id"), True),
         )
+
+
+class DailyProductionKwh(BaseModel):
+    id = AutoField(primary_key=True)
+    measurement_date = DateField(default=date.today)
+    device_id = IntegerField()
+    box_id = CharField(max_length=50)
+    kwh = FloatField()
+
+    class Meta:
+        table_name = 'daily_production_kwh'
+        schema = 'studer'
 
 
 class FullRegisters(BaseModel):

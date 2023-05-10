@@ -203,8 +203,8 @@ class MeterDataProcessorService:
 
         # Calculate average power for available readings
         total_power = 0
-        min_timestamp = datetime.max
-        max_timestamp = datetime.min
+        min_timestamp = datetime.max.replace(tzinfo=readings_by_hour[0].timestamp.tzinfo)
+        max_timestamp = datetime.min.replace(tzinfo=readings_by_hour[0].timestamp.tzinfo)
         for reading in readings_by_hour:
             power = reading.voltage * reading.current
             total_power += power

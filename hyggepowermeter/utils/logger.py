@@ -1,10 +1,10 @@
 import logging
 import os
 
-from hyggepowermeter.services.configuration.configuration import CONFIGURATION
+from hyggepowermeter.config.configuration import CONFIGURATION
 
 # Set up the logger
-logger = logging.getLogger("HYGGE POWER METER")
+logger = logging.getLogger("Hygge Energy System")
 logger.setLevel(getattr(logging, CONFIGURATION.logging.level))
 
 # Create a file handler for logging to a file

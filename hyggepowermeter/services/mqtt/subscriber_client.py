@@ -1,10 +1,9 @@
-from hyggepowermeter.services.configuration.configuration import PowerMeterSubscriberConfiguration
 from hyggepowermeter.services.mqtt.mqtt_base_client import MQTTClient
-from hyggepowermeter.services.log.logger import logger
 from hyggepowermeter.services.mqtt.topics.topics_factory import TopicFactory
+from hyggepowermeter.utils.logger import logger
 
 
-class PowerMeterSubscriberClient(MQTTClient):
+class EnergySubscriberClient(MQTTClient):
     def on_message(self, _, __, msg):
         try:
             topic = TopicFactory.get_topic_subscriber(msg.topic)

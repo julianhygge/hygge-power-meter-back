@@ -1,5 +1,5 @@
-from hyggepowermeter.data.power_meter_schemas import db
-from hyggepowermeter.services.log.logger import logger
+from hyggepowermeter.data.energy_system_schemas import db
+from hyggepowermeter.utils.logger import logger
 
 
 class RepositoryBase:

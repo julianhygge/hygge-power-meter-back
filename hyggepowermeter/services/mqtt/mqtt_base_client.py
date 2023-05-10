@@ -1,12 +1,13 @@
 import paho.mqtt.client as mqtt
-from hyggepowermeter.services.log.logger import logger
+
+from hyggepowermeter.utils.logger import logger
 
 
 class MQTTClient(object):
     """base mqtt hygge client - server connection"""
 
     def __init__(self, config):
-        self.client = mqtt.Client(client_id=config.id, clean_session=False)
+        self.client = mqtt.Client(client_id=config.id, clean_session=True)
         self.config = config
         self.client_id = config.id
         self.client.on_connect = self._on_connect

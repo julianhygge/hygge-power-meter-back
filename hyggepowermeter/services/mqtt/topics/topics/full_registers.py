@@ -1,8 +1,7 @@
 import json
 from types import SimpleNamespace
-
-from hyggepowermeter.services.log.logger import logger
 from hyggepowermeter.services.mqtt.topics.topic_base import TopicBase
+from hyggepowermeter.utils.logger import logger
 
 
 class FullRegisters(TopicBase):
@@ -26,6 +25,7 @@ class FullRegisters(TopicBase):
             "current": meter_registers_dict['rms_l1_current_ch2'],
             "voltage": meter_registers_dict['rms_l1_voltage']
         }
+
         school_data["power"] = (school_data["current"] * school_data["voltage"]) / 1000
 
         data = {

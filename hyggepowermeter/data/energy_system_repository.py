@@ -1,17 +1,12 @@
-from peewee import Expression
-from hyggepowermeter.data.power_meter_schemas import db, MainRegisters, HourlyKwh, DailyKwh, ProcessedReadings, \
-     MeterLoads, BaseModel, MeterDevices, FullRegisters, School, Lab, Inverter,\
-     BSP, VarioTrack
+from peewee import Expression, fn
+from hyggepowermeter.data.energy_system_schemas import db, MainRegisters, HourlyKwh, DailyKwh, ProcessedReadings, \
+    MeterLoads, BaseModel, MeterDevices, FullRegisters, School, Lab, Inverter, \
+    BSP, VarioTrack, DailyProductionKwh
 from hyggepowermeter.data.repository_base import RepositoryBase
-from hyggepowermeter.services.log.logger import logger
+from hyggepowermeter.utils.logger import logger
 
 
-# Organize the nodered dashboard
-# study lines
-# and check why the program is running only the last 24 hours.
-
-
-class PowerMeterRepository(RepositoryBase):
+class EnergySystemRepository(RepositoryBase):
     def __init__(self, db_config):
         super().__init__(db_config)
         db.init(database=db_config.database,
@@ -36,6 +31,7 @@ class PowerMeterRepository(RepositoryBase):
         self._create_table_if_not_exists(Inverter)
         self._create_table_if_not_exists(BSP)
         self._create_table_if_not_exists(VarioTrack)
+        self._create_table_if_not_exists(DailyProductionKwh)
 
     def insert_power_meter_reading(self, data):
         self._insert(MainRegisters, data)
@@ -169,3 +165,23 @@ class PowerMeterRepository(RepositoryBase):
             record.timestamp = data["timestamp"]
             record.last_processed_reading = data["last_processed_reading"]
             record.save()
+
+    @staticmethod
+    def select_pv_generations_by_day_after_date(last_date, device_id):
+        start_hour = 1
+        end_hour = 23
+        query = (VarioTrack
+                 .select(VarioTrack.id, VarioTrack.timestamp, VarioTrack.vt_prod_pre_day_kwh, VarioTrack.device_id)
+                 .where((fn.date_part('hour', VarioTrack.timestamp) >= start_hour) &
+                        (fn.date_part('hour', VarioTrack.timestamp) <= end_hour) &
+                        (VarioTrack.timestamp >= last_date) &
+                        (VarioTrack.device_id == device_id) &
+                        (~VarioTrack.vt_prod_pre_day_kwh.is_null())))
+        return query
+
+    def select_last_daily_generation(self, box_id, device_id):
+        device_id_filter = Expression(DailyProductionKwh.device_id, "=", device_id)
+        box_id_filter = Expression(DailyProductionKwh.box_id, "=", box_id)
+        filters = [device_id_filter, box_id_filter]
+        records = self._read(DailyProductionKwh, order_by=[DailyProductionKwh.id.desc()], filters=filters, limit=1)
+        return records

@@ -1,8 +1,7 @@
 import json
 from types import SimpleNamespace
-
-from hyggepowermeter.services.log.logger import logger
 from hyggepowermeter.services.mqtt.topics.topic_base import TopicBase
+from hyggepowermeter.utils import logger
 
 
 class MainRegisters(TopicBase):
