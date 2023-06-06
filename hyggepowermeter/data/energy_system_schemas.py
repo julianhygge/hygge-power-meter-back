@@ -2,18 +2,23 @@ from datetime import datetime
 from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase, \
     ForeignKeyField, DateField
 from datetime import date
+from playhouse.pool import PooledPostgresqlDatabase
 
 
-class PostgresqlUTCDatabase(PostgresqlDatabase):
+class PooledPostgresqlUTCDatabase(PooledPostgresqlDatabase):
     def _connect(self, *args, **kwargs):
-        conn = super(PostgresqlUTCDatabase, self)._connect(*args, **kwargs)
+        conn = super()._connect(*args, **kwargs)
         cursor = conn.cursor()
         cursor.execute("SET TIME ZONE 'UTC';")
         cursor.close()
         return conn
 
 
-db = PostgresqlUTCDatabase("power-meter")
+db = PooledPostgresqlUTCDatabase(
+    "power-meter",
+    max_connections=10,
+    stale_timeout=300,
+)
 
 
 class BaseModel(Model):
