@@ -1,6 +1,6 @@
 from datetime import datetime
 from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase, \
-    ForeignKeyField, DateField
+    ForeignKeyField, DateField, UUIDField, BooleanField
 from datetime import date
 from playhouse.pool import PooledPostgresqlDatabase
 
@@ -70,6 +70,20 @@ class Inverter(BaseModel):
     class Meta:
         table_name = 'inverter'
         schema = 'studer'
+
+
+class User(BaseModel):
+    id = UUIDField(primary_key=True)
+    created_on = DateTimeField(default=datetime.utcnow)
+    modified_on = DateTimeField(default=datetime.utcnow)
+    phone_number = CharField(null=True, max_length=12)
+    name = CharField(null=True, max_length=50)
+    email = CharField(null=True, max_length=50)
+    verified = BooleanField(default=False)
+
+    class Meta:
+        table_name = 'user'
+        schema = 'auth'
 
 
 class BSP(BaseModel):

@@ -1,7 +1,7 @@
 from peewee import Expression, fn
 from hyggepowermeter.data.energy_system_schemas import db, MainRegisters, HourlyKwh, DailyKwh, ProcessedReadings, \
     MeterLoads, BaseModel, MeterDevices, FullRegisters, School, Lab, Inverter, \
-    BSP, VarioTrack, DailyProductionKwh
+    BSP, VarioTrack, DailyProductionKwh, User
 from hyggepowermeter.data.repository_base import RepositoryBase
 from hyggepowermeter.utils.logger import logger
 
@@ -18,6 +18,8 @@ class EnergySystemRepository(RepositoryBase):
         self._create_schema_if_not_exists('control')
         self._create_schema_if_not_exists('studer')
         self._create_schema_if_not_exists('power_meter')
+        self._create_schema_if_not_exists('auth')
+        self._create_table_if_not_exists(User)
         self._create_table_if_not_exists(MainRegisters)
         self._create_table_if_not_exists(MeterLoads)
         self._create_table_if_not_exists(DailyKwh)
