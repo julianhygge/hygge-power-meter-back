@@ -1,8 +1,9 @@
-from datetime import datetime
 from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase, \
     ForeignKeyField, DateField, UUIDField, BooleanField
-from datetime import date
+from datetime import date, datetime
 from playhouse.pool import PooledPostgresqlDatabase
+import enum
+from playhouse.postgres_ext import BinaryJSONField
 
 
 class PooledPostgresqlUTCDatabase(PooledPostgresqlDatabase):
@@ -28,6 +29,53 @@ class BaseModel(Model):
     @classmethod
     def get_table_name(cls):
         return cls._meta.table_name
+
+
+class EnumField(CharField):
+    """
+    This class enable a Enum like field for Peewee
+    """
+
+    def __init__(self, enum_class, max_length=50, *args, **kwargs):
+        self.enum_class = enum_class
+        self.max_length = max_length
+        super(CharField, self).__init__(*args, **kwargs)
+
+    def db_value(self, value):
+        return value.value
+
+    def python_value(self, value):
+        return self.enum_class(value)
+
+
+class AuthenticationState(enum.Enum):
+    Unauthorized = 'UNAUTHENTICATED'
+    OtpRequired = 'OTP_REQUIRED'
+    OtpFailed = 'OTP_FAILED'
+    OtpRestricted = 'OTP_RESTRICTED'
+    Restricted = 'RESTRICTED'
+    Discarded = 'DISCARDED'
+    RefreshFailed = 'REFRESH_FAILED'
+    Success = 'SUCCESS'
+    OtpSendFailed = 'OTP_SEND_FAILED'
+
+
+class AuthAttempts(BaseModel):
+    txn_id = UUIDField(primary_key=True)
+    phone_number = CharField(max_length=12)
+    created_on = DateTimeField(default=datetime.utcnow)
+    modified_on = DateTimeField(default=datetime.utcnow)
+    country_code = CharField(max_length=4, null=True)
+    otp = CharField(max_length=6, null=True)
+    state = EnumField(enum_class=AuthenticationState)
+    state_desc = CharField(max_length=100)
+    verification_attempt_count = IntegerField(default=0)
+    gateway_send_otp_res_status = CharField(max_length=10, null=True)  # status code of sms gateway api call
+    gateway_send_otp_res_body = BinaryJSONField(null=True)  # response of sms gateway api call
+
+    class Meta:
+        table_name = 'auth_attempts'
+        schema = 'auth'
 
 
 class PowerMeterBase(BaseModel):
