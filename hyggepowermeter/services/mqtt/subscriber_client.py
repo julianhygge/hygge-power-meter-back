@@ -2,7 +2,6 @@ from hyggepowermeter.services.mqtt.mqtt_base_client import MQTTClient
 from hyggepowermeter.services.mqtt.topics.topics_factory import TopicFactory
 from hyggepowermeter.utils.logger import logger
 
-
 class EnergySubscriberClient(MQTTClient):
     def on_message(self, _, __, msg):
         try:
