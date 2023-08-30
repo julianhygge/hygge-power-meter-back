@@ -7,7 +7,7 @@ from hyggepowermeter.utils.logger import logger
 
 class StuderDataProcessor:
     def __init__(self, db_client):
-        self.__db_client = db_client
+        self._db_client = db_client
 
     def get_daily_pv_generations(self):
         inverter_1_id: int = 4
@@ -20,10 +20,10 @@ class StuderDataProcessor:
 
     def get_pv_generation_by_box_and_device_id(self, box_id, device_id):
         since_date = datetime.min
-        last_date = self.__db_client.select_last_daily_generation(box_id, device_id)
+        last_date = self._db_client.select_last_daily_generation(box_id, device_id)
         if any(last_date):
             since_date = last_date[0].measurement_date
-        results = self.__db_client.select_pv_generations_by_day_after_date(since_date, device_id)
+        results = self._db_client.select_pv_generations_by_day_after_date(since_date, device_id)
         grouped_results = {}
         list_results = list(results)
         for result in list_results:
@@ -53,7 +53,7 @@ class StuderDataProcessor:
                     'device_id': d['device_id'],
                     'box_id': box_id
                 })
-        self.__db_client.insert_daily_production(production_entities)
+        self._db_client.insert_daily_production(production_entities)
 
     def process_studer_data(self):
         self.get_daily_pv_generations()
