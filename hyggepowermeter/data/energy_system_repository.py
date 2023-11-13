@@ -62,15 +62,28 @@ class EnergySystemRepository(RepositoryBase):
 
     @staticmethod
     def _upsert(model_class, data):
-        query = (
-            model_class
-            .insert(data)
-            .on_conflict(
-                conflict_target=[model_class.timestamp, model_class.device_id, model_class.box_id, model_class.load_id],
-                update={model_class.power: data['power']}
-            )
-        )
-        query.execute()
+        exists_query = (model_class
+                        .select()
+                        .where((model_class.timestamp == data['timestamp']) &
+                               (model_class.device_id == data['device_id']) &
+                               (model_class.box_id == data['box_id']) &
+                               (model_class.load_id == data['load_id'])
+                               )
+
+                        .exists())
+
+        if exists_query:
+            update_query = (model_class.update({model_class.power: data['power']})
+                            .where((model_class.timestamp == data['timestamp']) &
+                                   (model_class.device_id == data['device_id']) &
+                                   (model_class.box_id == data['box_id']) &
+                                   (model_class.load_id == data['load_id'])
+                                   ))
+
+            update_query.execute()
+        else:
+            insert_query = model_class.insert(data)
+            insert_query.execute()
 
     def insert_hourly_kwh(self, data):
         self._insert(HourlyKwh, data)
