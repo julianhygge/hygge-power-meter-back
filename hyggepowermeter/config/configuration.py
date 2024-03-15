@@ -38,7 +38,8 @@ class PowerMeterSubscriberConfiguration:
         temp_obj.user = data["user"]
         temp_obj.password = data["password"]
         temp_obj.options = data["options"]
-
+        temp_obj.max_connections = data["max_connections"]
+        temp_obj.stale_timeout = data["stale_timeout"]
         return temp_obj
 
     def __get_logging_config(self):

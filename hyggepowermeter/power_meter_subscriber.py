@@ -8,7 +8,7 @@ from hyggepowermeter.utils.logger import logger
 
 
 def run_subscriber():
-    repository = EnergySystemRepository(CONFIGURATION.db)
+    repository = EnergySystemRepository()
     mqtt_client = EnergySubscriberClient(CONFIGURATION, repository)
     meter_data_processor_service = MeterDataProcessorService(repository)
     studer_processor_service = StuderDataProcessor(repository)

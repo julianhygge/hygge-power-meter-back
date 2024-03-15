@@ -1,5 +1,5 @@
 from peewee import Expression, fn
-from hyggepowermeter.data.energy_system_schemas import db, MainRegisters, HourlyKwh, DailyKwh, ProcessedReadings, \
+from hyggepowermeter.data.energy_system_schemas import MainRegisters, HourlyKwh, DailyKwh, ProcessedReadings, \
     MeterLoads, BaseModel, MeterDevices, FullRegisters, School, Lab, Inverter, \
     BSP, VarioTrack, DailyProductionKwh, User, AuthAttempts
 from hyggepowermeter.data.repository_base import RepositoryBase
@@ -7,13 +7,7 @@ from hyggepowermeter.utils.logger import logger
 
 
 class EnergySystemRepository(RepositoryBase):
-    def __init__(self, db_config):
-        super().__init__(db_config)
-        db.init(database=db_config.database,
-                host=db_config.host,
-                port=db_config.port,
-                user=db_config.user,
-                password=db_config.password)
+    def __init__(self):
         self._create_schema_if_not_exists('measurements')
         self._create_schema_if_not_exists('control')
         self._create_schema_if_not_exists('studer')

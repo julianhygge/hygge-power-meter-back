@@ -4,6 +4,7 @@ from datetime import date, datetime
 from playhouse.pool import PooledPostgresqlDatabase
 import enum
 from playhouse.postgres_ext import BinaryJSONField
+from hyggepowermeter.data.database import database
 
 
 class PooledPostgresqlUTCDatabase(PooledPostgresqlDatabase):
@@ -15,16 +16,12 @@ class PooledPostgresqlUTCDatabase(PooledPostgresqlDatabase):
         return conn
 
 
-db = PooledPostgresqlUTCDatabase(
-    "power-meter",
-    max_connections=10,
-    stale_timeout=300,
-)
+db_instance = database.get_instance()
 
 
 class BaseModel(Model):
     class Meta:
-        database = db
+        database = db_instance
 
     @classmethod
     def get_table_name(cls):

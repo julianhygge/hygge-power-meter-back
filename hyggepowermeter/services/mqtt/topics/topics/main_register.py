@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from hyggepowermeter.services.mqtt.topics.topic_base import TopicBase
 from hyggepowermeter.utils.logger import logger
 
+
 class MainRegisters(TopicBase):
     def do_action(self, msg, db_client):
         power_meter_reading = json.loads(msg.payload, object_hook=lambda d: SimpleNamespace(**d))
@@ -20,4 +21,3 @@ class MainRegisters(TopicBase):
         }
 
         db_client.insert_into_power_meter_table(data)
-
