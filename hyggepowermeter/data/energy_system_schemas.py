@@ -14,9 +14,9 @@ class BaseModel(Model):
     """Base model for Peewee ORM that sets the database dynamically."""
 
     @classmethod
-    def set_database(cls, db):
+    def set_database(cls, db_inst):
         """Sets the database for the model."""
-        cls._meta.database = db.get_instance()  # type: ignore
+        cls._meta.database = db_inst  # type: ignore
 
     @classmethod
     def get_table_name(cls):

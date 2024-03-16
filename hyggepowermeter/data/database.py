@@ -45,7 +45,7 @@ class Database:
     def _update_model_databases(self):
         """Updates the database instance for all models."""
         for model in self.models:
-            model.set_database(self)
+            model.set_database(self._db_instance)
 
     @staticmethod
     def _set_utc_timezone(db_ins):

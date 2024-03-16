@@ -1,4 +1,4 @@
-from hyggepowermeter.data.energy_system_schemas import db_instance
+from hyggepowermeter.data.energy_system_schemas import database
 from hyggepowermeter.utils.logger import logger
 
 
@@ -7,7 +7,7 @@ class RepositoryBase:
     @staticmethod
     def _insert(table_class, data):
         try:
-            with db_instance.atomic():
+            with database.get_instance().atomic():
                 record = table_class.create(**data)
                 logger.info(f"Inserted record with ID {record.id} into {table_class.get_table_name()}.")
                 return record
@@ -54,7 +54,7 @@ class RepositoryBase:
     def _create_schema_if_not_exists(schema_name):
         try:
             # Check if the schema exists
-            db_instance.execute_sql(f"CREATE SCHEMA IF NOT EXISTS {schema_name};")
+            database.get_instance().execute_sql(f"CREATE SCHEMA IF NOT EXISTS {schema_name};")
             logger.info(f"Schema {schema_name} created or already exists.")
-        except db_instance as e:
+        except Exception as e:
             logger.error(f"Error creating schema {schema_name}: {e}")
