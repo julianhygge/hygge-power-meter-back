@@ -1,20 +1,20 @@
-import datetime
-from peewee import DateTimeField, OperationalError
+from peewee import OperationalError
 from playhouse.pool import PooledPostgresqlDatabase
-from playhouse.signals import Model
-from hyggepowermeter.config.configuration import CONFIGURATION
 
 
 class Database:
-    def __init__(self, conf):
+    def __init__(self, conf, models):
         """Initializes the Database instance with configuration."""
         self._db_instance = None
         self._configuration = conf
+        # Assume models is a list of your model classes.
+        self.models = models
 
     def get_instance(self):
         """Gets the database instance, creating a new one if necessary."""
         if self._db_instance is None or not self._test_connection():
             self._db_instance = self._create_db_instance()
+            self._update_model_databases()
         return self._db_instance
 
     def _test_connection(self):
@@ -28,7 +28,7 @@ class Database:
 
     def _create_db_instance(self):
         """Creates a new database instance with pooled connections."""
-        db_instance = PooledPostgresqlDatabase(
+        db_inst = PooledPostgresqlDatabase(
             self._configuration.database,
             user=self._configuration.user,
             password=self._configuration.password,
@@ -38,8 +38,14 @@ class Database:
             stale_timeout=self._configuration.stale_timeout,
             autorollback=True
         )
-        self._set_utc_timezone(db_instance)
-        return db_instance
+        self._set_utc_timezone(db_inst)
+
+        return db_inst
+
+    def _update_model_databases(self):
+        """Updates the database instance for all models."""
+        for model in self.models:
+            model.set_database(self)
 
     @staticmethod
     def _set_utc_timezone(db_ins):
@@ -47,28 +53,3 @@ class Database:
         with db_ins.connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SET TIME ZONE 'UTC';")
-
-
-class BaseModel(Model):
-    """Base model for Peewee ORM that sets the database dynamically."""
-
-    @classmethod
-    def set_database(cls, db):
-        """Sets the database for the model."""
-        cls._meta.database = db.get_instance()  # type: ignore
-
-
-class InfDateTimeField(DateTimeField):
-    """DateTime field that supports 'infinity' and '-infinity' values."""
-
-    def db_value(self, value):
-        """Converts Python datetime values to database string representation."""
-        if value == datetime.datetime.max:
-            return 'infinity'
-        elif value == datetime.datetime.min:
-            return '-infinity'
-        else:
-            return super().db_value(value)
-
-
-database = Database(CONFIGURATION.db)

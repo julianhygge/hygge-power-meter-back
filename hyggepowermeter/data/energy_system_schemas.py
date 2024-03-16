@@ -1,36 +1,53 @@
-from peewee import Model, IntegerField, FloatField, CharField, AutoField, DateTimeField, PostgresqlDatabase, \
-    ForeignKeyField, DateField, UUIDField, BooleanField
+from peewee import IntegerField, FloatField, CharField, AutoField, DateTimeField, \
+    ForeignKeyField, DateField, UUIDField, BooleanField, Model
 from datetime import date, datetime
 from playhouse.pool import PooledPostgresqlDatabase
 import enum
 from playhouse.postgres_ext import BinaryJSONField
-from hyggepowermeter.data.database import database
+import datetime
+
+from hyggepowermeter.config.configuration import CONFIGURATION
+from hyggepowermeter.data.database import Database
+
+
+class BaseModel(Model):
+    """Base model for Peewee ORM that sets the database dynamically."""
+
+    @classmethod
+    def set_database(cls, db):
+        """Sets the database for the model."""
+        cls._meta.database = db.get_instance()  # type: ignore
+
+    @classmethod
+    def get_table_name(cls):
+        return cls._meta.table_name  # type: ignore
+
+
+class InfDateTimeField(DateTimeField):
+    """DateTime field that supports 'infinity' and '-infinity' values."""
+
+    def db_value(self, value):
+        """Converts Python datetime values to database string representation."""
+        if value == datetime.datetime.max:
+            return 'infinity'
+        elif value == datetime.datetime.min:
+            return '-infinity'
+        else:
+            return super().db_value(value)
 
 
 class PooledPostgresqlUTCDatabase(PooledPostgresqlDatabase):
     def _connect(self, *args, **kwargs):
-        conn = super()._connect(*args, **kwargs)
+        conn = super()._connect(*args, **kwargs)  # type: ignore
         cursor = conn.cursor()
         cursor.execute("SET TIME ZONE 'UTC';")
         cursor.close()
         return conn
 
 
-db_instance = database.get_instance()
-
-
-class BaseModel(Model):
-    class Meta:
-        database = db_instance
-
-    @classmethod
-    def get_table_name(cls):
-        return cls._meta.table_name
-
-
 class EnumField(CharField):
     """
-    This class enable a Enum like field for Peewee
+    This class enable an Enum like field for Peewee
     """
 
     def __init__(self, enum_class, max_length=50, *args, **kwargs):
@@ -60,8 +77,8 @@ class AuthenticationState(enum.Enum):
 class AuthAttempts(BaseModel):
     txn_id = UUIDField(primary_key=True)
     phone_number = CharField(max_length=12)
-    created_on = DateTimeField(default=datetime.utcnow)
-    modified_on = DateTimeField(default=datetime.utcnow)
+    created_on = DateTimeField(default=datetime.datetime.utcnow)
+    modified_on = DateTimeField(default=datetime.datetime.utcnow)
     country_code = CharField(max_length=4, null=True)
     otp = CharField(max_length=6, null=True)
     state = EnumField(enum_class=AuthenticationState)
@@ -77,7 +94,7 @@ class AuthAttempts(BaseModel):
 
 class PowerMeterBase(BaseModel):
     id = AutoField(primary_key=True)
-    timestamp = DateTimeField(default=datetime.now)
+    timestamp = DateTimeField(default=datetime.datetime.now)
     device_id = IntegerField()
     box_id = CharField(max_length=50)
     power = FloatField()
@@ -85,7 +102,7 @@ class PowerMeterBase(BaseModel):
 
 class Inverter(BaseModel):
     id = AutoField(primary_key=True)
-    timestamp = DateTimeField(default=datetime.now)
+    timestamp = DateTimeField(default=datetime.datetime.now)
     device_id = IntegerField()
     xt_bat_charge_a = FloatField(null=True)
     xt_phase = IntegerField(null=True)
@@ -119,8 +136,8 @@ class Inverter(BaseModel):
 
 class User(BaseModel):
     id = UUIDField(primary_key=True)
-    created_on = DateTimeField(default=datetime.utcnow)
-    modified_on = DateTimeField(default=datetime.utcnow)
+    created_on = DateTimeField(default=datetime.datetime.utcnow)
+    modified_on = DateTimeField(default=datetime.datetime.utcnow)
     phone_number = CharField(null=True, max_length=12)
     name = CharField(null=True, max_length=50)
     email = CharField(null=True, max_length=50)
@@ -133,7 +150,7 @@ class User(BaseModel):
 
 class BSP(BaseModel):
     id = AutoField(primary_key=True)
-    timestamp = DateTimeField(default=datetime.now)
+    timestamp = DateTimeField(default=datetime.datetime.now)
     device_id = IntegerField()
     bsp_charged_day_ah = FloatField(null=True)
     bsp_discharged_day_ah = FloatField(null=True)
@@ -149,7 +166,7 @@ class BSP(BaseModel):
 
 class VarioTrack(BaseModel):
     id = AutoField(primary_key=True)
-    timestamp = DateTimeField(default=datetime.now)
+    timestamp = DateTimeField(default=datetime.datetime.now)
     device_id = IntegerField()
     vt_battery_a = FloatField(null=True)
     vt_prod_day_ah = FloatField(null=True)
@@ -201,7 +218,7 @@ class Lab(PowerMeterBase):
 
 class ProcessedReadings(BaseModel):
     id = AutoField(primary_key=True)
-    timestamp = DateTimeField(default=datetime.now)
+    timestamp = DateTimeField(default=datetime.datetime.now)
     last_processed_reading = IntegerField()
     processed_table = CharField(max_length=20)
     box_id = CharField(max_length=20)
@@ -215,7 +232,7 @@ class ProcessedReadings(BaseModel):
 
 class MeterDevices(BaseModel):
     id = AutoField(primary_key=True)
-    timestamp = DateTimeField(default=datetime.now)
+    timestamp = DateTimeField(default=datetime.datetime.now)
     box_id = CharField(max_length=20)
     device_id = IntegerField()
     description = CharField(max_length=50)
@@ -228,7 +245,7 @@ class MeterDevices(BaseModel):
 
 class MeterLoads(BaseModel):
     id = AutoField(primary_key=True)
-    created_on = DateTimeField(default=datetime.now)
+    created_on = DateTimeField(default=datetime.datetime.now)
     description = CharField(max_length=50)
     box_id = CharField(max_length=20)
     measurements_table = CharField(max_length=20)
@@ -352,3 +369,12 @@ class FullRegisters(BaseModel):
         indexes = (
             (('timestamp', 'device_id', 'box_id'), True),
         )
+
+
+models = [User, AuthAttempts, MainRegisters, MeterLoads,
+          DailyKwh, HourlyKwh, ProcessedReadings, MeterDevices,
+          FullRegisters, School, Lab, Inverter, BSP, VarioTrack,
+          DailyProductionKwh]
+
+database = Database(CONFIGURATION.db, models)
+db_instance = database.get_instance()
